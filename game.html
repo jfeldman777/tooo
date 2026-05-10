@@ -360,9 +360,29 @@
         return groups;
       }
 
-      function getWordGroupForLevel(lvlIdx) {
-        const g = wordGroups[lvlIdx];
+      function getWordGroup(wi) {
+        const g = wordGroups[wi];
         return Array.isArray(g) && g.length === 8 ? g : null;
+      }
+
+      let plan = [];
+      let stepIndex = 0;
+      let activeWordGroupIdx = null;
+      let activePicsLevelIdx = null;
+
+      function rebuildPlan() {
+        plan.length = 0;
+        const n = Math.max(wordGroups.length, levels.length);
+        for (let i = 0; i < n; i++) {
+          const wg = wordGroups[i];
+          if (Array.isArray(wg) && wg.length === 8) {
+            plan.push({ kind: "words", wordIdx: i });
+          }
+          const lv = levels[i];
+          if (lv && Array.isArray(lv.images) && lv.images.length > 0) {
+            plan.push({ kind: "pics", levelIdx: i });
+          }
+        }
       }
 
       function loadWordsThenStart() {
@@ -380,12 +400,17 @@
             wordGroups = [];
           })
           .finally(function () {
+            rebuildPlan();
+            if (plan.length === 0) {
+              noDataEl.hidden = false;
+              return;
+            }
             mainEl.hidden = false;
-            startLevel(0);
+            resetSessionStats();
+            stepIndex = 0;
+            startCurrentStep();
           });
       }
-
-      let levelIndex = 0;
       let queue = [];
       let current = null;
       let busy = false;
@@ -458,8 +483,52 @@
       }
 
       function folderPath(item) {
-        const lv = levels[levelIndex];
+        const lv = levels[activePicsLevelIdx];
         return lv.folder + "/" + item.file;
+      }
+
+      function startCurrentStep() {
+        if (stepIndex >= plan.length) {
+          showGameEndKonets();
+          return;
+        }
+        const step = plan[stepIndex];
+        if (step.kind === "words") {
+          startWordsPhase(step.wordIdx);
+        } else {
+          startPicsPhaseForLevel(step.levelIdx);
+        }
+      }
+
+      function startWordsPhase(wi) {
+        activeWordGroupIdx = wi;
+        activePicsLevelIdx = null;
+        phase = "labels";
+        buildRows();
+        txtLabelQueue = shuffle([1, 2, 3, 4, 5, 6, 7, 8]);
+        txtLabelIndex = 0;
+        current = null;
+        hideStageTextCard();
+        showTxtChallenge();
+      }
+
+      function startPicsPhaseForLevel(li) {
+        activeWordGroupIdx = null;
+        activePicsLevelIdx = li;
+        phase = "pics";
+        buildRows();
+        const lv = levels[li];
+        queue = shuffle(
+          lv.images.map(function (x) {
+            return { file: x.file, class: x.class };
+          })
+        );
+        current = queue[0] || null;
+        hideStageTextCard();
+        currentImg.classList.remove("stage-txt");
+        levelMeta.textContent =
+          "Набор: " + lv.id + " · картинок: " + lv.images.length;
+        showCurrent();
       }
 
       function hideStageTextCard() {
@@ -489,7 +558,7 @@
 
       function showTxtChallenge() {
         const c = txtLabelQueue[txtLabelIndex];
-        const wg = getWordGroupForLevel(levelIndex);
+        const wg = getWordGroup(activeWordGroupIdx);
         feedback.textContent = "";
         feedback.className = "";
         currentWrap.hidden = false;
@@ -515,37 +584,6 @@
           "Шаг " +
           (txtLabelIndex + 1) +
           " из 8 — нажмите правильную клавишу";
-      }
-
-      function startLevel(idx) {
-        levelIndex = idx;
-        if (idx === 0) {
-          resetSessionStats();
-        }
-        const lv = levels[levelIndex];
-        if (!lv || !lv.images || lv.images.length === 0) {
-          showGameEndKonets();
-          return;
-        }
-        buildRows();
-        queue = shuffle(lv.images.map(function (x) {
-          return { file: x.file, class: x.class };
-        }));
-        current = null;
-        phase = "labels";
-        txtLabelQueue = shuffle([1, 2, 3, 4, 5, 6, 7, 8]);
-        txtLabelIndex = 0;
-        showTxtChallenge();
-      }
-
-      function beginPicsPhase(lv) {
-        phase = "pics";
-        hideStageTextCard();
-        currentImg.classList.remove("stage-txt");
-        levelMeta.textContent =
-          "Набор: " + lv.id + " · картинок: " + lv.images.length;
-        current = queue[0] || null;
-        showCurrent();
       }
 
       function flashRow(classNum, ok) {
@@ -576,7 +614,7 @@
         feedback.className = "ok";
         flashRow(chosen, true);
 
-        const wg = getWordGroupForLevel(levelIndex);
+        const wg = getWordGroup(activeWordGroupIdx);
         if (wg && wg[target - 1]) {
           const chip = document.createElement("span");
           chip.className = "word-chip";
@@ -587,10 +625,10 @@
         tasksDone += 1;
         updateGameStats();
         txtLabelIndex += 1;
-        const lv = levels[levelIndex];
 
         if (txtLabelIndex >= txtLabelQueue.length) {
-          beginPicsPhase(lv);
+          stepIndex += 1;
+          startCurrentStep();
         } else {
           showTxtChallenge();
         }
@@ -629,20 +667,8 @@
             busy = false;
 
             if (!current) {
-              const next = levelIndex + 1;
-              if (next < levels.length) {
-                overlay.hidden = false;
-                modalText.hidden = false;
-                modalTitle.textContent = "Набор «" + levels[levelIndex].id + "» завершён";
-                modalText.textContent = "Переходим к следующему набору.";
-                modalBtn.textContent = "Далее";
-                modalBtn.onclick = function () {
-                  overlay.hidden = true;
-                  startLevel(next);
-                };
-              } else {
-                showGameEndKonets();
-              }
+              stepIndex += 1;
+              startCurrentStep();
             }
           }, 380);
         } else {
@@ -678,7 +704,9 @@
           feedback.textContent = "";
           feedback.className = "";
           busy = false;
-          startLevel(0);
+          resetSessionStats();
+          stepIndex = 0;
+          startCurrentStep();
         };
         mainEl.hidden = false;
       }
