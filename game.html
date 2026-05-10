@@ -250,12 +250,59 @@
       max-width: 400px;
       text-align: center;
     }
+    .modal.modal--end {
+      max-width: min(580px, 94vw);
+      padding: 42px 46px 36px;
+      border-radius: 18px;
+    }
+    .modal.modal--end h2 {
+      font-size: clamp(2rem, 6vw, 2.75rem);
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      margin: 0 0 6px;
+    }
     .modal h2 {
       margin: 0 0 8px;
       font-size: 1.25rem;
     }
     .modal p { margin: 0 0 18px; color: var(--muted); font-size: 0.95rem; }
     .modal p[hidden] { display: none !important; }
+    .modal-end-stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px 28px;
+      justify-content: center;
+      align-items: stretch;
+      margin: 32px 0 36px;
+    }
+    .modal-end-stats[hidden] {
+      display: none !important;
+    }
+    .end-stat {
+      flex: 1 1 160px;
+      max-width: 220px;
+      background: linear-gradient(180deg, #242a35 0%, #1a1f28 100%);
+      border: 1px solid #3a4252;
+      border-radius: 14px;
+      padding: 22px 20px 20px;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    }
+    .end-stat .end-stat-label {
+      display: block;
+      font-size: 0.72rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 10px;
+    }
+    .end-stat .end-stat-value {
+      display: block;
+      font-size: 2.35rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      color: #f0f3f9;
+      line-height: 1.1;
+    }
     button.primary {
       background: var(--accent);
       color: #fff;
@@ -265,6 +312,13 @@
       font-size: 1rem;
       cursor: pointer;
       font-weight: 600;
+    }
+    button.primary.btn-compact {
+      padding: 6px 16px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      border-radius: 6px;
+      letter-spacing: 0.04em;
     }
     button.primary:hover { filter: brightness(1.08); }
     .empty-data {
@@ -297,9 +351,19 @@
     </div>
   </main>
   <div id="overlay" hidden>
-    <div class="modal">
+    <div class="modal" id="game-modal">
       <h2 id="modal-title"></h2>
       <p id="modal-text"></p>
+      <div id="modal-end-stats" class="modal-end-stats" hidden>
+        <div class="end-stat">
+          <span class="end-stat-label">Заданий</span>
+          <span class="end-stat-value" id="modal-stat-tasks">0</span>
+        </div>
+        <div class="end-stat">
+          <span class="end-stat-label">Ошибок</span>
+          <span class="end-stat-value" id="modal-stat-errors">0</span>
+        </div>
+      </div>
       <button type="button" class="primary" id="modal-btn">Далее</button>
     </div>
   </div>
@@ -329,8 +393,12 @@
       const stageTextCard = document.getElementById("stage-text-card");
       const feedback = document.getElementById("feedback");
       const overlay = document.getElementById("overlay");
+      const gameModal = document.getElementById("game-modal");
       const modalTitle = document.getElementById("modal-title");
       const modalText = document.getElementById("modal-text");
+      const modalEndStats = document.getElementById("modal-end-stats");
+      const modalStatTasks = document.getElementById("modal-stat-tasks");
+      const modalStatErrors = document.getElementById("modal-stat-errors");
       const modalBtn = document.getElementById("modal-btn");
 
       if (!Array.isArray(levels) || levels.length === 0) {
@@ -692,12 +760,20 @@
         currentImg.hidden = false;
         currentImg.classList.remove("stage-txt", "shrink-out");
         currentWrap.hidden = true;
+        gameModal.classList.add("modal--end");
         modalTitle.textContent = "КОНЕЦ";
         modalText.textContent = "";
         modalText.hidden = true;
-        modalBtn.textContent = "С начала";
+        modalEndStats.hidden = false;
+        modalStatTasks.textContent = String(tasksDone);
+        modalStatErrors.textContent = String(mistakeCount);
+        modalBtn.textContent = "СНАЧАЛА";
+        modalBtn.classList.add("btn-compact");
         modalBtn.onclick = function () {
           overlay.hidden = true;
+          gameModal.classList.remove("modal--end");
+          modalEndStats.hidden = true;
+          modalBtn.classList.remove("btn-compact");
           modalText.hidden = false;
           currentWrap.hidden = false;
           feedback.textContent = "";
