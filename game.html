@@ -248,7 +248,7 @@
     </div>
     <div id="stage">
       <div id="current-wrap">
-        <img id="current-img" alt="Текущее изображение" />
+        <img id="current-img" alt="" />
       </div>
       <div id="feedback" role="status"></div>
     </div>
@@ -362,10 +362,12 @@
         currentImg.classList.remove("stage-txt", "shrink-out");
         if (!current) {
           currentImg.removeAttribute("src");
+          currentImg.alt = "";
           return;
         }
         currentImg.classList.remove("shrink-out");
         currentImg.src = folderPath(current);
+        currentImg.alt = "";
       }
 
       function showTxtChallenge() {
@@ -375,7 +377,7 @@
         currentImg.classList.remove("shrink-out");
         currentImg.classList.add("stage-txt");
         currentImg.src = txt2imgIconSrc(c);
-        currentImg.alt = "Подпись " + c;
+        currentImg.alt = "";
         levelMeta.textContent =
           "Сначала подписи: " +
           (txtLabelIndex + 1) +
@@ -505,6 +507,9 @@
 
       function showGameEndKonets() {
         overlay.hidden = false;
+        currentImg.removeAttribute("src");
+        currentImg.alt = "";
+        currentImg.classList.remove("stage-txt", "shrink-out");
         modalTitle.textContent = "КОНЕЦ";
         modalText.textContent = "";
         modalText.hidden = true;
