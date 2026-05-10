@@ -7,6 +7,8 @@ function Get-ClassFromFilename([string]$name) {
     if ($m.Success) { return [int]$m.Groups[1].Value }
     $m2 = [regex]::Match($name, '^i(\d+)\.', [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
     if ($m2.Success) { return [int]$m2.Groups[1].Value }
+    $m3 = [regex]::Match($name, '^(\d+)a\.', [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
+    if ($m3.Success) { return [int]$m3.Groups[1].Value }
     return $null
 }
 
@@ -20,9 +22,13 @@ if (-not $dirs) {
 
 $levels = New-Object System.Collections.Generic.List[object]
 foreach ($d in $dirs) {
-    $pics = Get-ChildItem -LiteralPath $d.FullName -Filter *.png -File -ErrorAction SilentlyContinue |
-        Sort-Object Name
+    $pics = @(Get-ChildItem -LiteralPath $d.FullName -File -ErrorAction SilentlyContinue |
+        Where-Object { $_.Extension -match '^\.(png|jpg|jpeg|webp|gif)$' } |
+        Sort-Object @{ Expression = { switch ($_.Extension.ToLowerInvariant()) {
+                    '.png' { 0 } '.webp' { 1 } '.gif' { 2 } '.jpg' { 3 } '.jpeg' { 4 } Default { 9 }
+                } } }, Name)
     $images = New-Object System.Collections.Generic.List[object]
+    $seenClass = @{}
     foreach ($p in $pics) {
         $cls = Get-ClassFromFilename $p.Name
         if ($null -eq $cls) {
@@ -33,6 +39,10 @@ foreach ($d in $dirs) {
             Write-Warning ("Skip (class not 1..8): $($p.Name) -> $cls")
             continue
         }
+        if ($seenClass.ContainsKey($cls)) {
+            continue
+        }
+        [void]$seenClass.Add($cls, $true)
         [void]$images.Add([ordered]@{ file = $p.Name; class = $cls })
     }
     if ($images.Count -eq 0) { continue }
