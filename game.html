@@ -363,25 +363,31 @@
         if (!current) {
           currentImg.removeAttribute("src");
           currentImg.alt = "";
+          currentImg.removeAttribute("title");
+          currentWrap.hidden = true;
           return;
         }
+        currentWrap.hidden = false;
         currentImg.classList.remove("shrink-out");
         currentImg.src = folderPath(current);
         currentImg.alt = "";
+        currentImg.removeAttribute("title");
       }
 
       function showTxtChallenge() {
         const c = txtLabelQueue[txtLabelIndex];
         feedback.textContent = "";
         feedback.className = "";
+        currentWrap.hidden = false;
         currentImg.classList.remove("shrink-out");
         currentImg.classList.add("stage-txt");
         currentImg.src = txt2imgIconSrc(c);
         currentImg.alt = "";
+        currentImg.removeAttribute("title");
         levelMeta.textContent =
-          "Сначала подписи: " +
+          "Шаг " +
           (txtLabelIndex + 1) +
-          " из 8 — нажмите клавишу с такой же подписью";
+          " из 8 — нажмите клавишу, как на картинке";
       }
 
       function startLevel(idx) {
@@ -424,8 +430,7 @@
         if (busy) return;
         const target = txtLabelQueue[txtLabelIndex];
         if (chosen !== target) {
-          feedback.textContent =
-            "Не та клавиша — найдите ту, что совпадает с подписью на экране.";
+          feedback.textContent = "Не та клавиша — попробуйте ещё раз.";
           feedback.className = "bad";
           flashRow(chosen, false);
           currentWrap.classList.remove("shake");
@@ -509,7 +514,9 @@
         overlay.hidden = false;
         currentImg.removeAttribute("src");
         currentImg.alt = "";
+        currentImg.removeAttribute("title");
         currentImg.classList.remove("stage-txt", "shrink-out");
+        currentWrap.hidden = true;
         modalTitle.textContent = "КОНЕЦ";
         modalText.textContent = "";
         modalText.hidden = true;
@@ -517,6 +524,7 @@
         modalBtn.onclick = function () {
           overlay.hidden = true;
           modalText.hidden = false;
+          currentWrap.hidden = false;
           feedback.textContent = "";
           feedback.className = "";
           busy = false;
