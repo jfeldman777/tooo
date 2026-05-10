@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Угадай класс</title>
+  <title>Игра</title>
   <style>
     :root {
       --bg: #0f1114;
@@ -255,13 +255,13 @@
 <body>
   <div id="no-data" class="empty-data" hidden>
     <p>Нет данных для игры. Добавьте папки <code>img_1</code>, <code>img_2</code>, … с PNG-файлами.
-    Имя файла задаёт верный класс: <code>i3.png</code> или <code>3i.png</code> — класс 3.</p>
+    Имя файла задаёт верную строку: <code>i3.png</code> или <code>3i.png</code> — строка 3.</p>
     <p>Запустите <code>build-game-data.ps1</code> или <code>launch.bat</code>.</p>
   </div>
   <main id="game-main" hidden>
     <div>
       <div class="meta" id="level-meta"></div>
-      <div class="rows" id="rows" aria-label="Выбор класса (строка 1–8)"></div>
+      <div class="rows" id="rows" aria-label="Выбор строки или клавиши 1–8"></div>
     </div>
     <div id="stage">
       <div id="current-wrap">
@@ -336,7 +336,7 @@
           slot.dataset.class = String(c);
           slot.setAttribute("role", "button");
           slot.setAttribute("tabindex", "0");
-          slot.setAttribute("aria-label", "Класс " + c + ", клавиша " + c);
+          slot.setAttribute("aria-label", "Клавиша " + c);
           const kbd = document.createElement("div");
           kbd.className = "kbd-visual";
           const keyCol = document.createElement("div");
@@ -344,7 +344,7 @@
           const keyImg = document.createElement("img");
           keyImg.className = "kbd-square";
           keyImg.src = squareIconSrc(c);
-          keyImg.alt = "Класс " + c + ", квадратная иконка";
+          keyImg.alt = "Подсказка " + c;
           const keyNum = document.createElement("span");
           keyNum.className = "kbd-digit";
           keyNum.textContent = String(c);
