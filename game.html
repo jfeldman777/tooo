@@ -408,6 +408,7 @@
             mainEl.hidden = false;
             resetSessionStats();
             stepIndex = 0;
+            buildRows();
             startCurrentStep();
           });
       }
@@ -504,7 +505,6 @@
         activeWordGroupIdx = wi;
         activePicsLevelIdx = null;
         phase = "labels";
-        buildRows();
         txtLabelQueue = shuffle([1, 2, 3, 4, 5, 6, 7, 8]);
         txtLabelIndex = 0;
         current = null;
@@ -516,7 +516,6 @@
         activeWordGroupIdx = null;
         activePicsLevelIdx = li;
         phase = "pics";
-        buildRows();
         const lv = levels[li];
         queue = shuffle(
           lv.images.map(function (x) {
@@ -706,6 +705,7 @@
           busy = false;
           resetSessionStats();
           stepIndex = 0;
+          buildRows();
           startCurrentStep();
         };
         mainEl.hidden = false;
