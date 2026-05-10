@@ -73,14 +73,14 @@
       flex-direction: row;
       align-items: center;
       justify-content: center;
-      gap: 5px;
+      gap: 0;
       border: 1px solid var(--border);
       border-radius: 6px;
       padding: 3px 6px;
       margin: 0;
       flex: 0 0 auto;
       width: fit-content;
-      max-width: 146px;
+      max-width: 56px;
       background: linear-gradient(180deg, #262b36 0%, #181b22 100%);
       box-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
     }
@@ -99,23 +99,9 @@
       pointer-events: none;
       user-select: none;
     }
-    .kbd-txt2img {
-      display: block;
-      flex: 0 0 auto;
-      height: var(--kbd-picto);
-      width: auto;
-      max-width: 100px;
-      object-fit: contain;
-      object-position: left center;
-      pointer-events: none;
-      user-select: none;
-    }
     @media (max-width: 720px) {
       main {
         grid-template-columns: 1fr;
-      }
-      .kbd-txt2img {
-        max-width: 92px;
       }
     }
     .kbd-digit {
@@ -195,9 +181,6 @@
       border-radius: 10px;
       box-sizing: content-box;
       max-height: min(52vh, 480px);
-    }
-    .kbd-txt2img.kbd-txt-hidden {
-      visibility: hidden;
     }
     #feedback {
       margin-top: 12px;
@@ -315,7 +298,6 @@
       let current = null;
       let busy = false;
       const rowThumbs = [];
-      let rowTxtImgs = {};
       let phase = "labels";
       let txtLabelQueue = [];
       let txtLabelIndex = 0;
@@ -329,7 +311,6 @@
       function buildRows() {
         rowsEl.innerHTML = "";
         rowThumbs.length = 0;
-        rowTxtImgs = {};
         for (let c = 1; c <= 8; c++) {
           const slot = document.createElement("div");
           slot.className = "row-slot";
@@ -350,13 +331,7 @@
           keyNum.textContent = String(c);
           keyCol.appendChild(keyImg);
           keyCol.appendChild(keyNum);
-          const t2i = document.createElement("img");
-          t2i.className = "kbd-txt2img kbd-txt-hidden";
-          t2i.src = txt2imgIconSrc(c);
-          t2i.alt = "";
-          rowTxtImgs[c] = t2i;
           kbd.appendChild(keyCol);
-          kbd.appendChild(t2i);
           const thumbs = document.createElement("div");
           thumbs.className = "thumbs";
           slot.appendChild(kbd);
@@ -460,11 +435,6 @@
         feedback.textContent = "Верно!";
         feedback.className = "ok";
         flashRow(chosen, true);
-
-        const t2 = rowTxtImgs[target];
-        if (t2) {
-          t2.classList.remove("kbd-txt-hidden");
-        }
 
         txtLabelIndex += 1;
         const lv = levels[levelIndex];
