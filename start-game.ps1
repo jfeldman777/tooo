@@ -2,7 +2,7 @@
 $ErrorActionPreference = "Stop"
 $root = $PSScriptRoot
 & "$root\build-game-data.ps1"
-$game = Join-Path $root "game.html"
+$entryPage = Join-Path $root "index.html"
 
 function Open-HtmlInBrowser([string]$htmlPath) {
     $exePaths = @(
@@ -24,4 +24,4 @@ function Open-HtmlInBrowser([string]$htmlPath) {
     [void][System.Diagnostics.Process]::Start($psi)
 }
 
-Open-HtmlInBrowser $game
+Open-HtmlInBrowser $entryPage
