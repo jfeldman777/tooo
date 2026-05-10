@@ -1,0 +1,2 @@
+"use strict";
+window.GAME_LEVELS = [{"id":"img_1","folder":"img_1","images":[{"file":"3i.png","class":3},{"file":"4i.png","class":4},{"file":"5i.png","class":5},{"file":"6i.png","class":6},{"file":"7i.png","class":7},{"file":"8i.png","class":8},{"file":"i1.png","class":1},{"file":"i2.png","class":2}]}];
