@@ -38,6 +38,11 @@
       color: var(--muted);
       margin-bottom: 10px;
     }
+    .game-stats {
+      font-size: 0.9rem;
+      color: #c5cad4;
+      font-variant-numeric: tabular-nums;
+    }
     .rows {
       display: flex;
       flex-direction: column;
@@ -243,6 +248,7 @@
   </div>
   <main id="game-main" hidden>
     <div>
+      <div class="meta game-stats" id="game-stats" aria-live="polite"></div>
       <div class="meta" id="level-meta"></div>
       <div class="rows" id="rows" aria-label="Выбор строки или клавиши 1–8"></div>
     </div>
@@ -280,6 +286,7 @@
       const mainEl = document.getElementById("game-main");
       const rowsEl = document.getElementById("rows");
       const levelMeta = document.getElementById("level-meta");
+      const gameStats = document.getElementById("game-stats");
       const currentImg = document.getElementById("current-img");
       const currentWrap = document.getElementById("current-wrap");
       const feedback = document.getElementById("feedback");
@@ -301,6 +308,20 @@
       let phase = "labels";
       let txtLabelQueue = [];
       let txtLabelIndex = 0;
+      let tasksDone = 0;
+      let mistakeCount = 0;
+
+      function updateGameStats() {
+        gameStats.textContent =
+          "Заданий: " + tasksDone + " · Ошибок: " + mistakeCount;
+      }
+
+      function resetSessionStats() {
+        tasksDone = 0;
+        mistakeCount = 0;
+        updateGameStats();
+      }
+
       function squareIconSrc(classNum) {
         return "_img_0/" + classNum + ".png";
       }
@@ -392,6 +413,9 @@
 
       function startLevel(idx) {
         levelIndex = idx;
+        if (idx === 0) {
+          resetSessionStats();
+        }
         const lv = levels[levelIndex];
         if (!lv || !lv.images || lv.images.length === 0) {
           showGameEndKonets();
@@ -430,6 +454,8 @@
         if (busy) return;
         const target = txtLabelQueue[txtLabelIndex];
         if (chosen !== target) {
+          mistakeCount += 1;
+          updateGameStats();
           feedback.textContent = "Не та клавиша — попробуйте ещё раз.";
           feedback.className = "bad";
           flashRow(chosen, false);
@@ -443,6 +469,8 @@
         feedback.className = "ok";
         flashRow(chosen, true);
 
+        tasksDone += 1;
+        updateGameStats();
         txtLabelIndex += 1;
         const lv = levels[levelIndex];
 
@@ -480,6 +508,8 @@
             queue.shift();
             current = queue[0] || null;
             currentImg.classList.remove("shrink-out");
+            tasksDone += 1;
+            updateGameStats();
             showCurrent();
             busy = false;
 
@@ -501,6 +531,8 @@
             }
           }, 380);
         } else {
+          mistakeCount += 1;
+          updateGameStats();
           feedback.textContent = "Не та строка — попробуйте ещё раз.";
           feedback.className = "bad";
           flashRow(chosen, false);
