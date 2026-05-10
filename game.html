@@ -125,6 +125,11 @@
       align-content: flex-start;
       min-height: 36px;
     }
+    .thumbs .word-chip {
+      justify-content: center;
+      text-align: center;
+      hyphens: auto;
+    }
     .thumbs img {
       width: 44px;
       height: 44px;
@@ -186,6 +191,37 @@
       border-radius: 10px;
       box-sizing: content-box;
       max-height: min(52vh, 480px);
+    }
+    #stage-text-card {
+      display: none;
+      background: #f3f4f8;
+      color: #1a1f28;
+      padding: 20px 24px;
+      border-radius: 10px;
+      font-size: 1.1rem;
+      line-height: 1.45;
+      text-align: center;
+      max-width: min(440px, 100%);
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+      margin: 0 auto;
+      word-wrap: break-word;
+    }
+    #stage-text-card:not([hidden]) {
+      display: block;
+    }
+    .word-chip {
+      display: inline-flex;
+      align-items: center;
+      flex: 0 0 auto;
+      max-width: 160px;
+      padding: 5px 8px;
+      background: #f3f4f8;
+      color: #1a1f28;
+      border-radius: 6px;
+      font-size: 0.72rem;
+      line-height: 1.25;
+      border: 1px solid #c8ccd4;
+      animation: thumbIn 0.45s ease;
     }
     #feedback {
       margin-top: 12px;
@@ -255,6 +291,7 @@
     <div id="stage">
       <div id="current-wrap">
         <img id="current-img" alt="" />
+        <div id="stage-text-card" hidden></div>
       </div>
       <div id="feedback" role="status"></div>
     </div>
@@ -289,6 +326,7 @@
       const gameStats = document.getElementById("game-stats");
       const currentImg = document.getElementById("current-img");
       const currentWrap = document.getElementById("current-wrap");
+      const stageTextCard = document.getElementById("stage-text-card");
       const feedback = document.getElementById("feedback");
       const overlay = document.getElementById("overlay");
       const modalTitle = document.getElementById("modal-title");
@@ -298,6 +336,53 @@
       if (!Array.isArray(levels) || levels.length === 0) {
         noDataEl.hidden = false;
         return;
+      }
+
+      let wordGroups = [];
+
+      function parseWordsText(raw) {
+        const groups = [];
+        const re = /\{([\s\S]*?)\}/g;
+        let m;
+        while ((m = re.exec(raw)) !== null) {
+          const parts = m[1].split(",");
+          const words = parts
+            .map(function (s) {
+              return s.replace(/\s+/g, " ").trim();
+            })
+            .filter(function (s) {
+              return s.length > 0;
+            });
+          if (words.length === 8) {
+            groups.push(words);
+          }
+        }
+        return groups;
+      }
+
+      function getWordGroupForLevel(lvlIdx) {
+        const g = wordGroups[lvlIdx];
+        return Array.isArray(g) && g.length === 8 ? g : null;
+      }
+
+      function loadWordsThenStart() {
+        fetch("txt2img/words.txt")
+          .then(function (r) {
+            if (!r.ok) {
+              throw new Error("words");
+            }
+            return r.text();
+          })
+          .then(function (t) {
+            wordGroups = parseWordsText(t);
+          })
+          .catch(function () {
+            wordGroups = [];
+          })
+          .finally(function () {
+            mainEl.hidden = false;
+            startLevel(0);
+          });
       }
 
       let levelIndex = 0;
@@ -377,9 +462,16 @@
         return lv.folder + "/" + item.file;
       }
 
+      function hideStageTextCard() {
+        stageTextCard.hidden = true;
+        stageTextCard.textContent = "";
+        currentImg.hidden = false;
+      }
+
       function showCurrent() {
         feedback.textContent = "";
         feedback.className = "";
+        hideStageTextCard();
         currentImg.classList.remove("stage-txt", "shrink-out");
         if (!current) {
           currentImg.removeAttribute("src");
@@ -397,14 +489,28 @@
 
       function showTxtChallenge() {
         const c = txtLabelQueue[txtLabelIndex];
+        const wg = getWordGroupForLevel(levelIndex);
         feedback.textContent = "";
         feedback.className = "";
         currentWrap.hidden = false;
         currentImg.classList.remove("shrink-out");
-        currentImg.classList.add("stage-txt");
-        currentImg.src = txt2imgIconSrc(c);
-        currentImg.alt = "";
-        currentImg.removeAttribute("title");
+
+        if (wg) {
+          currentImg.removeAttribute("src");
+          currentImg.alt = "";
+          currentImg.removeAttribute("title");
+          currentImg.classList.remove("stage-txt");
+          currentImg.hidden = true;
+          stageTextCard.hidden = false;
+          stageTextCard.textContent = wg[c - 1];
+        } else {
+          hideStageTextCard();
+          currentImg.classList.add("stage-txt");
+          currentImg.src = txt2imgIconSrc(c);
+          currentImg.alt = "";
+          currentImg.removeAttribute("title");
+        }
+
         levelMeta.textContent =
           "Шаг " +
           (txtLabelIndex + 1) +
@@ -434,6 +540,7 @@
 
       function beginPicsPhase(lv) {
         phase = "pics";
+        hideStageTextCard();
         currentImg.classList.remove("stage-txt");
         levelMeta.textContent =
           "Набор: " + lv.id + " · картинок: " + lv.images.length;
@@ -468,6 +575,14 @@
         feedback.textContent = "Верно!";
         feedback.className = "ok";
         flashRow(chosen, true);
+
+        const wg = getWordGroupForLevel(levelIndex);
+        if (wg && wg[target - 1]) {
+          const chip = document.createElement("span");
+          chip.className = "word-chip";
+          chip.textContent = wg[target - 1];
+          rowThumbs[target].appendChild(chip);
+        }
 
         tasksDone += 1;
         updateGameStats();
@@ -544,9 +659,12 @@
 
       function showGameEndKonets() {
         overlay.hidden = false;
+        stageTextCard.hidden = true;
+        stageTextCard.textContent = "";
         currentImg.removeAttribute("src");
         currentImg.alt = "";
         currentImg.removeAttribute("title");
+        currentImg.hidden = false;
         currentImg.classList.remove("stage-txt", "shrink-out");
         currentWrap.hidden = true;
         modalTitle.textContent = "КОНЕЦ";
@@ -571,8 +689,7 @@
         if (n >= 1 && n <= 8) onPick(n);
       });
 
-      mainEl.hidden = false;
-      startLevel(0);
+      loadWordsThenStart();
     })();
   </script>
 </body>
