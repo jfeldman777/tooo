@@ -180,7 +180,7 @@
       object-fit: contain;
       border-radius: 8px;
       background: #0a0c0f;
-      transition: transform 0.35s ease, opacity 0.35s ease;
+      transition: transform 0.16s ease, opacity 0.16s ease;
     }
     #current-img.shrink-out {
       transform: scale(0.12);
@@ -589,6 +589,23 @@
         return lv.folder + "/" + item.file;
       }
 
+      var PIC_SHRINK_WAIT_MS = 175;
+
+      function preloadQueueAhead() {
+        if (phase !== "pics" || activePicsLevelIdx == null || !queue.length) {
+          return;
+        }
+        var n = Math.min(queue.length, 6);
+        var i;
+        for (i = 1; i < n; i += 1) {
+          var item = queue[i];
+          if (!item) continue;
+          var im = new Image();
+          im.decoding = "async";
+          im.src = folderPath(item);
+        }
+      }
+
       function startCurrentStep() {
         if (stepIndex >= plan.length) {
           showGameEndKonets();
@@ -655,6 +672,9 @@
         currentImg.alt = "";
         currentImg.removeAttribute("title");
         currentImg.classList.remove("shrink-out");
+        if (phase === "pics" && queue.length > 1) {
+          preloadQueueAhead();
+        }
       }
 
       function showTxtChallenge() {
@@ -799,6 +819,7 @@
               currentImg.onerror = null;
               currentImg.classList.remove("pic-pending", "shrink-out");
               busy = false;
+              preloadQueueAhead();
             }
 
             currentImg.onload = finishReveal;
@@ -806,13 +827,11 @@
             currentImg.src = nextUrl;
 
             if (currentImg.complete && currentImg.naturalWidth > 0) {
-              window.requestAnimationFrame(finishReveal);
+              finishReveal();
             } else if (typeof currentImg.decode === "function") {
-              currentImg.decode().then(function () {
-                window.requestAnimationFrame(finishReveal);
-              }).catch(finishReveal);
+              currentImg.decode().then(finishReveal).catch(finishReveal);
             }
-          }, 380);
+          }, PIC_SHRINK_WAIT_MS);
         } else {
           mistakeCount += 1;
           updateGameStats();
