@@ -9,8 +9,10 @@
   <style>
     .index-help-fab {
       position: fixed;
+      top: max(12px, env(safe-area-inset-top, 0px));
       right: max(14px, env(safe-area-inset-right, 0px));
-      bottom: max(16px, env(safe-area-inset-bottom, 0px));
+      bottom: auto;
+      left: auto;
       z-index: 100;
       width: 52px;
       height: 52px;

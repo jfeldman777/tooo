@@ -42,12 +42,14 @@
     .meta-row {
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: flex-start;
       gap: 12px;
       flex-wrap: wrap;
       margin-bottom: 10px;
     }
     .meta-row .game-stats {
+      flex: 1 1 auto;
+      min-width: 0;
       margin-bottom: 0;
     }
     .help-inline-btn {
@@ -432,13 +434,13 @@
   <main id="game-main" hidden>
     <div>
       <div class="meta-row">
-        <div class="meta game-stats" id="game-stats" aria-live="polite"></div>
         <button
           type="button"
           class="js-open-briefing help-inline-btn"
           aria-label="Как устроено задание"
           title="Как устроено задание"
         >?</button>
+        <div class="meta game-stats" id="game-stats" aria-live="polite"></div>
       </div>
       <div class="meta" id="level-meta"></div>
       <div class="rows" id="rows" aria-label="Выбор строки или клавиши 1–8"></div>
