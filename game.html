@@ -118,12 +118,12 @@
     }
     .thumbs {
       display: flex;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
       flex: 1 1 0;
       min-width: 0;
       gap: 6px;
       align-items: center;
-      align-content: flex-start;
+      overflow-x: hidden;
       min-height: 36px;
     }
     .thumbs .word-chip {
@@ -509,6 +509,35 @@
         return "txt2img/" + classNum + "o.png";
       }
 
+      function trimThumbsRow(thumbsEl) {
+        if (!thumbsEl) return;
+        window.requestAnimationFrame(function () {
+          window.requestAnimationFrame(function () {
+            var guard = 0;
+            while (
+              thumbsEl.firstChild &&
+              thumbsEl.scrollWidth > thumbsEl.clientWidth + 2 &&
+              guard < 80
+            ) {
+              thumbsEl.removeChild(thumbsEl.firstChild);
+              guard += 1;
+            }
+          });
+        });
+      }
+
+      function trimAllThumbRows() {
+        for (var c = 1; c <= 8; c++) {
+          trimThumbsRow(rowThumbs[c]);
+        }
+      }
+
+      var thumbsResizeTimer = null;
+      window.addEventListener("resize", function () {
+        clearTimeout(thumbsResizeTimer);
+        thumbsResizeTimer = setTimeout(trimAllThumbRows, 120);
+      });
+
       function buildRows() {
         rowsEl.innerHTML = "";
         rowThumbs.length = 0;
@@ -688,6 +717,7 @@
           chip.className = "word-chip";
           chip.textContent = wg[target - 1];
           rowThumbs[target].appendChild(chip);
+          trimThumbsRow(rowThumbs[target]);
         }
 
         tasksDone += 1;
@@ -725,6 +755,7 @@
             thumb.src = folderPath(current);
             thumb.alt = current.file;
             rowThumbs[current.class].appendChild(thumb);
+            trimThumbsRow(rowThumbs[current.class]);
 
             queue.shift();
             current = queue[0] || null;
