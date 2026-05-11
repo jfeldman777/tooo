@@ -638,19 +638,20 @@
         feedback.textContent = "";
         feedback.className = "";
         hideStageTextCard();
-        currentImg.classList.remove("stage-txt", "shrink-out");
+        currentImg.classList.remove("stage-txt");
         if (!current) {
           currentImg.removeAttribute("src");
           currentImg.alt = "";
           currentImg.removeAttribute("title");
           currentWrap.hidden = true;
+          currentImg.classList.remove("shrink-out");
           return;
         }
         currentWrap.hidden = false;
-        currentImg.classList.remove("shrink-out");
         currentImg.src = folderPath(current);
         currentImg.alt = "";
         currentImg.removeAttribute("title");
+        currentImg.classList.remove("shrink-out");
       }
 
       function showTxtChallenge() {
@@ -751,15 +752,15 @@
 
           currentImg.classList.add("shrink-out");
           window.setTimeout(function () {
+            var answered = current;
             const thumb = document.createElement("img");
-            thumb.src = folderPath(current);
-            thumb.alt = current.file;
-            rowThumbs[current.class].appendChild(thumb);
-            trimThumbsRow(rowThumbs[current.class]);
+            thumb.src = folderPath(answered);
+            thumb.alt = answered.file;
+            rowThumbs[answered.class].appendChild(thumb);
+            trimThumbsRow(rowThumbs[answered.class]);
 
             queue.shift();
             current = queue[0] || null;
-            currentImg.classList.remove("shrink-out");
             tasksDone += 1;
             updateGameStats();
             showCurrent();
