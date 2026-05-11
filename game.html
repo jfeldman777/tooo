@@ -271,6 +271,23 @@
     }
     .modal p { margin: 0 0 18px; color: var(--muted); font-size: 0.95rem; }
     .modal p[hidden] { display: none !important; }
+    .modal.modal--briefing {
+      max-width: min(640px, 94vw);
+      text-align: left;
+    }
+    .modal.modal--briefing h2 {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    .modal.modal--briefing p {
+      margin: 0 0 1rem;
+      font-size: 0.95rem;
+      color: #d8dce6;
+      line-height: 1.55;
+    }
+    .modal.modal--briefing p:last-of-type {
+      margin-bottom: 0;
+    }
     .modal-end-stats {
       display: flex;
       flex-wrap: wrap;
@@ -439,6 +456,8 @@
 
       let plan = [];
       let stepIndex = 0;
+      var BRIEFING_BEFORE_ONE_BASED_TASK = 6;
+      var BRIEFING_STEP_INDEX = BRIEFING_BEFORE_ONE_BASED_TASK - 1;
       let activeWordGroupIdx = null;
       let activePicsLevelIdx = null;
 
@@ -606,11 +625,49 @@
         }
       }
 
+      function resetModalChrome() {
+        gameModal.classList.remove("modal--end", "modal--briefing");
+        modalEndStats.hidden = true;
+        modalBtn.classList.remove("btn-compact");
+        modalText.hidden = false;
+      }
+
+      function showBriefingIntro(continueFn) {
+        resetModalChrome();
+        gameModal.classList.add("modal--briefing");
+        modalTitle.textContent = "Как устроено задание";
+        modalText.innerHTML =
+          "<p>Мы с детства, сами того не замечая, делим ситуации на классы сложности. Этих классов восемь, и я обозначил их номерами и квадратами с пиктограммой.</p>" +
+          "<p>Ваша задача — отнести ситуацию на картинке к одному из классов; то же самое — с фразами и ключевыми словами. Выбрав класс слева, нажмите на клавишу.</p>";
+        modalText.hidden = false;
+        modalEndStats.hidden = true;
+        modalBtn.textContent = "Понятно";
+        modalBtn.onclick = function () {
+          overlay.hidden = true;
+          resetModalChrome();
+          continueFn();
+        };
+        overlay.hidden = false;
+      }
+
       function startCurrentStep() {
         if (stepIndex >= plan.length) {
           showGameEndKonets();
           return;
         }
+        if (
+          stepIndex === BRIEFING_STEP_INDEX &&
+          plan.length > BRIEFING_STEP_INDEX
+        ) {
+          showBriefingIntro(function () {
+            runCurrentStep();
+          });
+          return;
+        }
+        runCurrentStep();
+      }
+
+      function runCurrentStep() {
         const step = plan[stepIndex];
         if (step.kind === "words") {
           startWordsPhase(step.wordIdx);
@@ -846,6 +903,7 @@
 
       function showGameEndKonets() {
         overlay.hidden = false;
+        resetModalChrome();
         stageTextCard.hidden = true;
         stageTextCard.textContent = "";
         currentImg.removeAttribute("src");
@@ -865,10 +923,7 @@
         modalBtn.classList.add("btn-compact");
         modalBtn.onclick = function () {
           overlay.hidden = true;
-          gameModal.classList.remove("modal--end");
-          modalEndStats.hidden = true;
-          modalBtn.classList.remove("btn-compact");
-          modalText.hidden = false;
+          resetModalChrome();
           currentWrap.hidden = false;
           feedback.textContent = "";
           feedback.className = "";
