@@ -6,8 +6,31 @@
   <link rel="icon" href="favicon.svg" type="image/svg+xml" sizes="any" />
   <meta http-equiv="refresh" content="0; url=game.html" />
   <title>К игре</title>
+  <style>
+    .index-help-fab {
+      position: fixed;
+      right: max(14px, env(safe-area-inset-right, 0px));
+      bottom: max(16px, env(safe-area-inset-bottom, 0px));
+      z-index: 100;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      border: 2px solid #5b8cde;
+      background: linear-gradient(180deg, #3a4a66 0%, #1e2635 100%);
+      color: #fff;
+      font-size: 1.45rem;
+      font-weight: 800;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45);
+    }
+    .index-help-fab:hover { filter: brightness(1.08); }
+  </style>
 </head>
 <body>
   <p><a href="game.html">Открыть игру</a></p>
+  <a href="game.html" class="index-help-fab" aria-label="Открыть игру" title="Игра">?</a>
 </body>
 </html>

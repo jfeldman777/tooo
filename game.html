@@ -353,18 +353,18 @@
       position: fixed;
       right: max(14px, env(safe-area-inset-right, 0px));
       bottom: max(16px, env(safe-area-inset-bottom, 0px));
-      z-index: 40;
-      width: 46px;
-      height: 46px;
+      z-index: 100;
+      width: 52px;
+      height: 52px;
       border-radius: 50%;
-      border: 1px solid var(--border);
-      background: linear-gradient(180deg, #2a3140 0%, #1a1f28 100%);
-      color: #e8eaf0;
-      font-size: 1.35rem;
-      font-weight: 700;
+      border: 2px solid var(--accent);
+      background: linear-gradient(180deg, #3a4a66 0%, #1e2635 100%);
+      color: #fff;
+      font-size: 1.45rem;
+      font-weight: 800;
       font-family: inherit;
       cursor: pointer;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.08);
       line-height: 1;
       padding: 0;
       display: flex;
@@ -458,7 +458,6 @@
         e.preventDefault();
         e.stopPropagation();
         if (helpFab.hidden) return;
-        if (overlay.hidden === false) return;
         showBriefingIntro(function () {});
       });
 
@@ -532,6 +531,7 @@
             rebuildPlan();
             if (plan.length === 0) {
               noDataEl.hidden = false;
+              helpFab.hidden = true;
               return;
             }
             mainEl.hidden = false;
