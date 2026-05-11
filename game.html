@@ -186,6 +186,9 @@
       transform: scale(0.12);
       opacity: 0;
     }
+    #current-img.pic-pending {
+      visibility: hidden;
+    }
     #current-img.stage-txt {
       background: #f3f4f8;
       padding: 14px 18px;
@@ -638,7 +641,7 @@
         feedback.textContent = "";
         feedback.className = "";
         hideStageTextCard();
-        currentImg.classList.remove("stage-txt");
+        currentImg.classList.remove("stage-txt", "pic-pending");
         if (!current) {
           currentImg.removeAttribute("src");
           currentImg.alt = "";
@@ -660,7 +663,7 @@
         feedback.textContent = "";
         feedback.className = "";
         currentWrap.hidden = false;
-        currentImg.classList.remove("shrink-out");
+        currentImg.classList.remove("shrink-out", "pic-pending");
 
         if (wg) {
           currentImg.removeAttribute("src");
@@ -763,12 +766,51 @@
             current = queue[0] || null;
             tasksDone += 1;
             updateGameStats();
-            showCurrent();
-            busy = false;
 
             if (!current) {
+              feedback.textContent = "";
+              feedback.className = "";
+              hideStageTextCard();
+              currentImg.classList.remove("stage-txt", "pic-pending");
+              currentImg.removeAttribute("src");
+              currentImg.alt = "";
+              currentImg.removeAttribute("title");
+              currentWrap.hidden = true;
+              currentImg.classList.remove("shrink-out");
+              busy = false;
               stepIndex += 1;
               startCurrentStep();
+              return;
+            }
+
+            hideStageTextCard();
+            currentImg.classList.remove("stage-txt");
+            currentImg.classList.add("pic-pending");
+            currentWrap.hidden = false;
+            var nextUrl = folderPath(current);
+            currentImg.alt = "";
+            currentImg.removeAttribute("title");
+
+            var revealed = false;
+            function finishReveal() {
+              if (revealed) return;
+              revealed = true;
+              currentImg.onload = null;
+              currentImg.onerror = null;
+              currentImg.classList.remove("pic-pending", "shrink-out");
+              busy = false;
+            }
+
+            currentImg.onload = finishReveal;
+            currentImg.onerror = finishReveal;
+            currentImg.src = nextUrl;
+
+            if (currentImg.complete && currentImg.naturalWidth > 0) {
+              window.requestAnimationFrame(finishReveal);
+            } else if (typeof currentImg.decode === "function") {
+              currentImg.decode().then(function () {
+                window.requestAnimationFrame(finishReveal);
+              }).catch(finishReveal);
             }
           }, 380);
         } else {
@@ -791,7 +833,7 @@
         currentImg.alt = "";
         currentImg.removeAttribute("title");
         currentImg.hidden = false;
-        currentImg.classList.remove("stage-txt", "shrink-out");
+        currentImg.classList.remove("stage-txt", "shrink-out", "pic-pending");
         currentWrap.hidden = true;
         gameModal.classList.add("modal--end");
         modalTitle.textContent = "КОНЕЦ";
