@@ -456,8 +456,6 @@
 
       let plan = [];
       let stepIndex = 0;
-      var BRIEFING_BEFORE_ONE_BASED_TASK = 6;
-      var BRIEFING_STEP_INDEX = BRIEFING_BEFORE_ONE_BASED_TASK - 1;
       let activeWordGroupIdx = null;
       let activePicsLevelIdx = null;
 
@@ -499,8 +497,7 @@
             mainEl.hidden = false;
             resetSessionStats();
             stepIndex = 0;
-            buildRows();
-            startCurrentStep();
+            beginPlayFromBriefing();
           });
       }
       let queue = [];
@@ -632,6 +629,13 @@
         modalText.hidden = false;
       }
 
+      function beginPlayFromBriefing() {
+        buildRows();
+        showBriefingIntro(function () {
+          startCurrentStep();
+        });
+      }
+
       function showBriefingIntro(continueFn) {
         resetModalChrome();
         gameModal.classList.add("modal--briefing");
@@ -653,15 +657,6 @@
       function startCurrentStep() {
         if (stepIndex >= plan.length) {
           showGameEndKonets();
-          return;
-        }
-        if (
-          stepIndex === BRIEFING_STEP_INDEX &&
-          plan.length > BRIEFING_STEP_INDEX
-        ) {
-          showBriefingIntro(function () {
-            runCurrentStep();
-          });
           return;
         }
         runCurrentStep();
@@ -930,8 +925,7 @@
           busy = false;
           resetSessionStats();
           stepIndex = 0;
-          buildRows();
-          startCurrentStep();
+          beginPlayFromBriefing();
         };
         mainEl.hidden = false;
       }
