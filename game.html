@@ -39,6 +39,39 @@
       color: var(--muted);
       margin-bottom: 10px;
     }
+    .meta-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+    .meta-row .game-stats {
+      margin-bottom: 0;
+    }
+    .help-inline-btn {
+      flex: 0 0 auto;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 3px solid #fff;
+      background: linear-gradient(180deg, #5b8cde 0%, #2d5a9e 100%);
+      color: #fff;
+      font-size: 1.25rem;
+      font-weight: 800;
+      font-family: inherit;
+      cursor: pointer;
+      line-height: 1;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+    }
+    .help-inline-btn:hover {
+      filter: brightness(1.08);
+    }
     .game-stats {
       font-size: 0.9rem;
       color: #c5cad4;
@@ -351,14 +384,16 @@
     }
     #help-fab {
       position: fixed;
+      top: max(12px, env(safe-area-inset-top, 0px));
       right: max(14px, env(safe-area-inset-right, 0px));
-      bottom: max(16px, env(safe-area-inset-bottom, 0px));
-      z-index: 100;
+      bottom: auto;
+      left: auto;
+      z-index: 2147483647;
       width: 52px;
       height: 52px;
       border-radius: 50%;
-      border: 2px solid var(--accent);
-      background: linear-gradient(180deg, #3a4a66 0%, #1e2635 100%);
+      border: 3px solid #fff;
+      background: linear-gradient(180deg, #5b8cde 0%, #2d5a9e 100%);
       color: #fff;
       font-size: 1.45rem;
       font-weight: 800;
@@ -371,6 +406,10 @@
       align-items: center;
       justify-content: center;
       user-select: none;
+      -webkit-user-select: none;
+      box-sizing: border-box;
+      isolation: isolate;
+      -webkit-tap-highlight-color: transparent;
     }
     #help-fab:hover {
       border-color: var(--accent);
@@ -386,10 +425,21 @@
     <p>Нет данных для игры. Добавьте папки <code>img_1</code>, <code>img_2</code>, … с PNG-файлами.
     Имя файла задаёт верную строку: <code>i3.png</code> или <code>3i.png</code> — строка 3.</p>
     <p>Запустите <code>build-game-data.ps1</code> или <code>launch.bat</code>.</p>
+    <p>
+      <button type="button" class="js-open-briefing primary">Как устроено задание</button>
+    </p>
   </div>
   <main id="game-main" hidden>
     <div>
-      <div class="meta game-stats" id="game-stats" aria-live="polite"></div>
+      <div class="meta-row">
+        <div class="meta game-stats" id="game-stats" aria-live="polite"></div>
+        <button
+          type="button"
+          class="js-open-briefing help-inline-btn"
+          aria-label="Как устроено задание"
+          title="Как устроено задание"
+        >?</button>
+      </div>
       <div class="meta" id="level-meta"></div>
       <div class="rows" id="rows" aria-label="Выбор строки или клавиши 1–8"></div>
     </div>
@@ -419,7 +469,14 @@
     </div>
   </div>
 
-  <button type="button" id="help-fab" hidden aria-label="Как устроено задание">?</button>
+  <button
+    type="button"
+    id="help-fab"
+    class="help-fab js-open-briefing"
+    aria-label="Как устроено задание"
+    title="Как устроено задание"
+    style="position:fixed;top:12px;right:16px;z-index:2147483647"
+  >?</button>
 
   <script src="game-data.js"></script>
   <script>
@@ -453,13 +510,16 @@
       const modalStatTasks = document.getElementById("modal-stat-tasks");
       const modalStatErrors = document.getElementById("modal-stat-errors");
       const modalBtn = document.getElementById("modal-btn");
-      const helpFab = document.getElementById("help-fab");
-      helpFab.addEventListener("click", function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-        if (helpFab.hidden) return;
-        showBriefingIntro(function () {});
-      });
+      function wireHelpButtons() {
+        document.querySelectorAll(".js-open-briefing").forEach(function (btn) {
+          btn.addEventListener("click", function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            showBriefingIntro(function () {});
+          });
+        });
+      }
+      wireHelpButtons();
 
       if (!Array.isArray(levels) || levels.length === 0) {
         noDataEl.hidden = false;
@@ -531,13 +591,11 @@
             rebuildPlan();
             if (plan.length === 0) {
               noDataEl.hidden = false;
-              helpFab.hidden = true;
               return;
             }
             mainEl.hidden = false;
             resetSessionStats();
             stepIndex = 0;
-            helpFab.hidden = false;
             beginPlayFromBriefing();
           });
       }
