@@ -349,6 +349,36 @@
       max-width: 480px;
       margin: 40px auto;
     }
+    #help-fab {
+      position: fixed;
+      right: max(14px, env(safe-area-inset-right, 0px));
+      bottom: max(16px, env(safe-area-inset-bottom, 0px));
+      z-index: 40;
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, #2a3140 0%, #1a1f28 100%);
+      color: #e8eaf0;
+      font-size: 1.35rem;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+      line-height: 1;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+    }
+    #help-fab:hover {
+      border-color: var(--accent);
+      color: #fff;
+    }
+    #help-fab:active {
+      transform: scale(0.96);
+    }
   </style>
 </head>
 <body>
@@ -389,6 +419,8 @@
     </div>
   </div>
 
+  <button type="button" id="help-fab" hidden aria-label="Как устроено задание">?</button>
+
   <script src="game-data.js"></script>
   <script>
     (function () {
@@ -421,6 +453,14 @@
       const modalStatTasks = document.getElementById("modal-stat-tasks");
       const modalStatErrors = document.getElementById("modal-stat-errors");
       const modalBtn = document.getElementById("modal-btn");
+      const helpFab = document.getElementById("help-fab");
+      helpFab.addEventListener("click", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (helpFab.hidden) return;
+        if (overlay.hidden === false) return;
+        showBriefingIntro(function () {});
+      });
 
       if (!Array.isArray(levels) || levels.length === 0) {
         noDataEl.hidden = false;
@@ -497,6 +537,7 @@
             mainEl.hidden = false;
             resetSessionStats();
             stepIndex = 0;
+            helpFab.hidden = false;
             beginPlayFromBriefing();
           });
       }
