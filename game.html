@@ -707,19 +707,22 @@
       }
 
       var PIC_SHRINK_WAIT_MS = 175;
+      var PIC_REVEAL_MAX_MS = 480;
+      var picShrinkTimer = null;
+      var preloadNextOnly = new Image();
 
       function preloadQueueAhead() {
-        if (phase !== "pics" || activePicsLevelIdx == null || !queue.length) {
+        if (phase !== "pics" || activePicsLevelIdx == null || queue.length < 2) {
           return;
         }
-        var n = Math.min(queue.length, 6);
-        var i;
-        for (i = 1; i < n; i += 1) {
-          var item = queue[i];
-          if (!item) continue;
-          var im = new Image();
-          im.decoding = "async";
-          im.src = folderPath(item);
+        var next = queue[1];
+        if (!next) return;
+        var url = folderPath(next);
+        try {
+          preloadNextOnly.decoding = "async";
+          preloadNextOnly.src = url;
+        } catch (e) {
+          /* ignore */
         }
       }
 
@@ -773,6 +776,13 @@
       }
 
       function startWordsPhase(wi) {
+        if (picShrinkTimer !== null) {
+          window.clearTimeout(picShrinkTimer);
+          picShrinkTimer = null;
+        }
+        preloadNextOnly.onload = null;
+        preloadNextOnly.onerror = null;
+        preloadNextOnly.removeAttribute("src");
         activeWordGroupIdx = wi;
         activePicsLevelIdx = null;
         phase = "labels";
@@ -784,6 +794,10 @@
       }
 
       function startPicsPhaseForLevel(li) {
+        if (picShrinkTimer !== null) {
+          window.clearTimeout(picShrinkTimer);
+          picShrinkTimer = null;
+        }
         activeWordGroupIdx = null;
         activePicsLevelIdx = li;
         phase = "pics";
@@ -926,8 +940,13 @@
           feedback.className = "ok";
           flashRow(chosen, true);
 
+          if (picShrinkTimer !== null) {
+            window.clearTimeout(picShrinkTimer);
+            picShrinkTimer = null;
+          }
           currentImg.classList.add("shrink-out");
-          window.setTimeout(function () {
+          picShrinkTimer = window.setTimeout(function () {
+            picShrinkTimer = null;
             var answered = current;
             const thumb = document.createElement("img");
             thumb.src = folderPath(answered);
@@ -965,9 +984,14 @@
             currentImg.removeAttribute("title");
 
             var revealed = false;
+            var revealCapTimer = null;
             function finishReveal() {
               if (revealed) return;
               revealed = true;
+              if (revealCapTimer !== null) {
+                window.clearTimeout(revealCapTimer);
+                revealCapTimer = null;
+              }
               currentImg.onload = null;
               currentImg.onerror = null;
               currentImg.classList.remove("pic-pending", "shrink-out");
@@ -977,6 +1001,7 @@
 
             currentImg.onload = finishReveal;
             currentImg.onerror = finishReveal;
+            revealCapTimer = window.setTimeout(finishReveal, PIC_REVEAL_MAX_MS);
             currentImg.src = nextUrl;
 
             if (currentImg.complete && currentImg.naturalWidth > 0) {
