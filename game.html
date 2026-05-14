@@ -599,12 +599,80 @@
     #book-fab:active {
       transform: scale(0.96);
     }
+    #feedback-fab {
+      position: fixed;
+      top: max(12px, env(safe-area-inset-top, 0px));
+      right: calc(max(14px, env(safe-area-inset-right, 0px)) + 240px);
+      bottom: auto;
+      left: auto;
+      z-index: 2147483647;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      border: 3px solid #fff;
+      background: linear-gradient(180deg, #5b8cde 0%, #2d5a9e 100%);
+      color: #fff;
+      font-family: inherit;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.08);
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+      -webkit-user-select: none;
+      box-sizing: border-box;
+      isolation: isolate;
+      -webkit-tap-highlight-color: transparent;
+    }
+    #feedback-fab:hover {
+      border-color: var(--accent);
+      color: #fff;
+    }
+    #feedback-fab:active {
+      transform: scale(0.96);
+    }
+    #donate-fab {
+      position: fixed;
+      top: max(12px, env(safe-area-inset-top, 0px));
+      right: calc(max(14px, env(safe-area-inset-right, 0px)) + 300px);
+      bottom: auto;
+      left: auto;
+      z-index: 2147483647;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      border: 3px solid #fff;
+      background: linear-gradient(180deg, #e07896 0%, #b84a6a 100%);
+      color: #fff;
+      font-family: inherit;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.08);
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+      -webkit-user-select: none;
+      box-sizing: border-box;
+      isolation: isolate;
+      -webkit-tap-highlight-color: transparent;
+    }
+    #donate-fab:hover {
+      border-color: var(--accent);
+      color: #fff;
+    }
+    #donate-fab:active {
+      transform: scale(0.96);
+    }
     /* после базовых FAB — иначе горизонтальные top/right перебивают вертикальную колонку */
     @media (max-width: 720px) {
       #help-fab,
       #info-fab,
       #series-fab,
-      #book-fab {
+      #book-fab,
+      #feedback-fab,
+      #donate-fab {
         width: var(--fab-size);
         height: var(--fab-size);
         border-width: 2px;
@@ -629,6 +697,16 @@
         );
         font-size: 1.2rem;
       }
+      #feedback-fab {
+        top: calc(
+          max(10px, env(safe-area-inset-top, 0px)) + 4 * (var(--fab-size) + var(--fab-gap))
+        );
+      }
+      #donate-fab {
+        top: calc(
+          max(10px, env(safe-area-inset-top, 0px)) + 5 * (var(--fab-size) + var(--fab-gap))
+        );
+      }
       body:has(#series-fab[hidden]) #book-fab {
         top: max(10px, env(safe-area-inset-top, 0px));
       }
@@ -638,6 +716,16 @@
       body:has(#series-fab[hidden]) #help-fab {
         top: calc(
           max(10px, env(safe-area-inset-top, 0px)) + 2 * (var(--fab-size) + var(--fab-gap))
+        );
+      }
+      body:has(#series-fab[hidden]) #feedback-fab {
+        top: calc(
+          max(10px, env(safe-area-inset-top, 0px)) + 3 * (var(--fab-size) + var(--fab-gap))
+        );
+      }
+      body:has(#series-fab[hidden]) #donate-fab {
+        top: calc(
+          max(10px, env(safe-area-inset-top, 0px)) + 4 * (var(--fab-size) + var(--fab-gap))
         );
       }
     }
@@ -656,7 +744,168 @@
     .series-overlay[hidden] {
       display: none !important;
     }
-    .series-picker-modal {
+    .feedback-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.55);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 2147483646;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .feedback-overlay[hidden] {
+      display: none !important;
+    }
+    .feedback-modal {
+      max-width: min(480px, 96vw);
+      width: 100%;
+      text-align: left;
+      padding: 20px 22px 16px;
+    }
+    .feedback-modal h2 {
+      text-align: center;
+    }
+    .feedback-hint {
+      margin: 0 0 12px;
+      font-size: 0.85rem;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+    .feedback-label {
+      display: block;
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    #feedback-msg {
+      width: 100%;
+      min-height: 120px;
+      resize: vertical;
+      padding: 10px 12px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      color: var(--text);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 14px;
+      box-sizing: border-box;
+    }
+    .feedback-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+      align-items: center;
+    }
+    .feedback-actions button.secondary,
+    .support-footer-actions button.secondary {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 0.88rem;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .feedback-actions button.secondary:hover,
+    .support-footer-actions button.secondary:hover {
+      border-color: var(--accent);
+      color: #fff;
+    }
+    .support-overlay {
+      z-index: 2147483647;
+    }
+    .support-modal {
+      max-width: min(420px, 96vw);
+      width: 100%;
+      text-align: left;
+      padding: 22px 22px 18px;
+    }
+    .support-title {
+      margin: 0 0 10px;
+      font-size: 1.35rem;
+      font-weight: 800;
+      text-align: center;
+      color: #e8c547;
+      letter-spacing: 0.02em;
+    }
+    .support-intro {
+      margin: 0 0 18px;
+      font-size: 0.9rem;
+      line-height: 1.5;
+      color: #c5cad4;
+      text-align: center;
+    }
+    .support-region-label {
+      margin: 16px 0 8px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .support-region-label:first-of-type {
+      margin-top: 0;
+    }
+    .support-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+    }
+    .support-card-head {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+    .support-card-line {
+      margin: 0 0 6px;
+      font-size: 0.88rem;
+      color: #c5cad4;
+      line-height: 1.4;
+    }
+    .support-card-muted {
+      color: var(--muted);
+      font-size: 0.82rem;
+      margin-top: 8px;
+      margin-bottom: 0;
+    }
+    .support-card-phone {
+      margin: 0;
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+    .support-card-phone a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+    .support-card-phone a:hover {
+      text-decoration: underline;
+    }
+    .support-card-email {
+      margin: 0;
+      font-size: 1.05rem;
+      font-weight: 700;
+    }
+    .support-card-email a {
+      color: #e8c547;
+      text-decoration: none;
+      word-break: break-all;
+    }
+    .support-card-email a:hover {
+      text-decoration: underline;
+    }
+    .support-footer-actions {
+      margin-top: 18px;
+      display: flex;
+      justify-content: flex-end;
+    }
       max-width: min(520px, 96vw);
       max-height: min(86vh, 640px);
       min-height: 0;
@@ -902,6 +1151,66 @@
     </div>
   </div>
 
+  <div id="feedback-overlay" class="feedback-overlay" hidden>
+    <div
+      class="modal feedback-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="feedback-title"
+    >
+      <h2 id="feedback-title">Написать автору</h2>
+      <p class="feedback-hint">
+        Кнопка «Почта» откроет письмо на <strong>jfeldman777@gmail.com</strong> (или черновик на GitHub). Текст ниже
+        попадёт в тело письма или в описание задачи.
+      </p>
+      <label for="feedback-msg" class="feedback-label">Сообщение</label>
+      <textarea id="feedback-msg" maxlength="8000" placeholder="Текст сообщения…"></textarea>
+      <div class="feedback-actions">
+        <button type="button" class="secondary" id="feedback-close">Закрыть</button>
+        <button type="button" class="secondary" id="feedback-copy">Скопировать</button>
+        <button type="button" class="secondary" id="feedback-github">GitHub</button>
+        <button type="button" class="primary btn-compact" id="feedback-mailto">Почта</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="support-overlay" class="feedback-overlay support-overlay" hidden>
+    <div
+      class="modal support-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="support-title"
+    >
+      <h2 id="support-title" class="support-title">Поддержать автора</h2>
+      <p class="support-intro">
+        Если вам понравились игры, вы можете поблагодарить автора — перечислить ему любую сумму. Спасибо, что играете.
+      </p>
+      <p class="support-region-label">Для тех, кто в России</p>
+      <div class="support-card">
+        <div class="support-card-head">Сбербанк</div>
+        <p class="support-card-line">Телефон для перевода (в т.ч. СБП):</p>
+        <p class="support-card-phone">
+          <a href="tel:+79516746481">+7&nbsp;(951)&nbsp;674-64-81</a>
+        </p>
+        <p class="support-card-line support-card-muted">Получатель: Яков Ф.</p>
+      </div>
+      <p class="support-region-label">Для всех остальных</p>
+      <div class="support-card">
+        <div class="support-card-head">PayPal</div>
+        <p class="support-card-line">Адрес получателя:</p>
+        <p class="support-card-email">
+          <a href="mailto:elenafeldman9@gmail.com">elenafeldman9@gmail.com</a>
+        </p>
+        <p class="support-card-line support-card-muted">
+          В приложении или на сайте PayPal укажите этот e-mail у получателя платежа.
+        </p>
+      </div>
+      <div class="support-footer-actions">
+        <button type="button" class="secondary" id="support-close">Закрыть</button>
+      </div>
+    </div>
+  </div>
+
   <a
     href="book.html"
     id="book-fab"
@@ -939,6 +1248,34 @@
     aria-label="Как мы измеряем сложность"
     title="Как мы измеряем сложность"
   >?</button>
+
+  <button
+    type="button"
+    id="feedback-fab"
+    aria-label="Написать автору"
+    title="Форма обратной связи — написать автору"
+  >
+    <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path
+        fill="currentColor"
+        d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5L4 8V6l8 5 8-5v2z"
+      />
+    </svg>
+  </button>
+
+  <button
+    type="button"
+    id="donate-fab"
+    aria-label="Поддержать автора — донат"
+    title="Поддержать автора (Сбербанк, PayPal)"
+  >
+    <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path
+        fill="currentColor"
+        d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
+      />
+    </svg>
+  </button>
 
   <script src="game-data.js?v=1778730021"></script>
   <script>
@@ -2258,6 +2595,116 @@
       }
 
       var infoFab = document.getElementById("info-fab");
+      var donateFab = document.getElementById("donate-fab");
+      var feedbackFab = document.getElementById("feedback-fab");
+      var feedbackOverlay = document.getElementById("feedback-overlay");
+      var feedbackMsg = document.getElementById("feedback-msg");
+      var feedbackClose = document.getElementById("feedback-close");
+      var feedbackCopy = document.getElementById("feedback-copy");
+      var feedbackGithub = document.getElementById("feedback-github");
+      var feedbackMailto = document.getElementById("feedback-mailto");
+      var supportOverlay = document.getElementById("support-overlay");
+      var supportClose = document.getElementById("support-close");
+      var FEEDBACK_GH_NEW_ISSUE = "https://github.com/jfeldman777/tooo/issues/new";
+      var FEEDBACK_TO = "jfeldman777@gmail.com";
+
+      function buildFeedbackBody() {
+        var raw = feedbackMsg && feedbackMsg.value ? feedbackMsg.value.trim() : "";
+        var footer = "\n\n—\nСтраница: " + (typeof location !== "undefined" ? location.href : "");
+        return (raw || "(сообщение без текста)") + footer;
+      }
+
+      function closeFeedbackModal() {
+        if (feedbackOverlay) feedbackOverlay.hidden = true;
+      }
+
+      function closeSupportModal() {
+        if (supportOverlay) supportOverlay.hidden = true;
+      }
+
+      function openSupportModal() {
+        if (!supportOverlay) return;
+        closeFeedbackModal();
+        supportOverlay.hidden = false;
+      }
+
+      function openFeedbackModal() {
+        if (!feedbackOverlay) return;
+        feedbackOverlay.hidden = false;
+        if (feedbackMsg) {
+          feedbackMsg.value = "";
+          window.setTimeout(function () {
+            feedbackMsg.focus();
+          }, 0);
+        }
+      }
+
+      if (donateFab) {
+        donateFab.addEventListener("click", function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          openSupportModal();
+        });
+      }
+      if (feedbackFab) {
+        feedbackFab.addEventListener("click", function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          openFeedbackModal();
+        });
+      }
+      if (feedbackOverlay) {
+        feedbackOverlay.addEventListener("click", function (e) {
+          if (e.target === feedbackOverlay) closeFeedbackModal();
+        });
+      }
+      if (feedbackClose) {
+        feedbackClose.addEventListener("click", function () {
+          closeFeedbackModal();
+        });
+      }
+      if (feedbackCopy) {
+        feedbackCopy.addEventListener("click", function () {
+          var t = buildFeedbackBody();
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(t).then(
+              function () {
+                window.alert("Текст скопирован в буфер обмена.");
+              },
+              function () {
+                window.alert(t);
+              }
+            );
+          } else {
+            window.prompt("Скопируйте текст (Ctrl+C):", t);
+          }
+        });
+      }
+      if (feedbackGithub) {
+        feedbackGithub.addEventListener("click", function () {
+          var body = encodeURIComponent(buildFeedbackBody());
+          var title = encodeURIComponent("Игра tooo — обратная связь");
+          window.open(FEEDBACK_GH_NEW_ISSUE + "?title=" + title + "&body=" + body, "_blank", "noopener,noreferrer");
+        });
+      }
+      if (feedbackMailto) {
+        feedbackMailto.addEventListener("click", function () {
+          var subj = encodeURIComponent("Игра tooo — обратная связь");
+          var body = encodeURIComponent(buildFeedbackBody());
+          window.location.href = "mailto:" + FEEDBACK_TO + "?subject=" + subj + "&body=" + body;
+        });
+      }
+      if (supportOverlay) {
+        supportOverlay.addEventListener("click", function (e) {
+          if (e.target === supportOverlay) closeSupportModal();
+        });
+      }
+      if (supportClose) {
+        supportClose.addEventListener("click", function () {
+          closeSupportModal();
+        });
+      }
+
       if (infoFab) {
         infoFab.addEventListener("click", function (e) {
           e.preventDefault();
