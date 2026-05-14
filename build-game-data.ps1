@@ -68,4 +68,23 @@ $outPath = Join-Path $root "game-data.js"
 $js = "`"use strict`";`r`nwindow.GAME_LEVELS = $json;"
 [System.IO.File]::WriteAllText($outPath, $js, [System.Text.UTF8Encoding]::new($false))
 
+# Bust browser/CDN cache for GitHub Pages: same URL otherwise keeps old GAME_LEVELS.
+$gameHtmlPath = Join-Path $root "game.html"
+if (Test-Path -LiteralPath $gameHtmlPath) {
+    $utf8 = New-Object System.Text.UTF8Encoding $false
+    $html = [System.IO.File]::ReadAllText($gameHtmlPath, $utf8)
+    $bust = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
+    $pat = '<script\s+src="game-data\.js(?:\?[^"]*)?"\s*>\s*</script>'
+    $rep = "<script src=`"game-data.js?v=$bust`"></script>"
+    $m = [regex]::Match($html, $pat)
+    if ($m.Success) {
+        $newHtml = $html.Substring(0, $m.Index) + $rep + $html.Substring($m.Index + $m.Length)
+        [System.IO.File]::WriteAllText($gameHtmlPath, $newHtml, $utf8)
+        Write-Host "OK: game.html -> game-data.js?v=$bust"
+    }
+    else {
+        Write-Warning "game.html: no <script src=`"game-data.js`"> tag found; cache-bust skipped."
+    }
+}
+
 Write-Host "OK: $($arr.Count) series in pics -> $outPath"
