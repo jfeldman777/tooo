@@ -3,6 +3,9 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   <link rel="icon" href="favicon.svg" type="image/svg+xml" sizes="any" />
   <title>Игра</title>
   <style>
@@ -246,7 +249,25 @@
       word-wrap: break-word;
     }
     #stage-text-card:not([hidden]) {
-      display: block;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+    }
+    #stage-text-card .stage-text-series {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: #4a5568;
+      letter-spacing: 0.02em;
+      margin-bottom: 10px;
+      line-height: 1.35;
+      max-width: 100%;
+    }
+    #stage-text-card .stage-text-main {
+      font-size: 1.1rem;
+      line-height: 1.45;
+      max-width: 100%;
     }
     .word-chip {
       display: inline-flex;
@@ -308,6 +329,10 @@
     .modal p[hidden] { display: none !important; }
     .modal.modal--briefing {
       max-width: min(640px, 94vw);
+      max-height: min(88vh, 720px);
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
       text-align: left;
     }
     .modal.modal--briefing h2 {
@@ -358,6 +383,54 @@
       font-variant-numeric: tabular-nums;
       color: #f0f3f9;
       line-height: 1.1;
+    }
+    .end-stat.is-clickable {
+      cursor: pointer;
+      border-color: var(--accent);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04),
+        0 0 0 1px rgba(91, 140, 222, 0.45);
+      transition: transform 0.12s ease, box-shadow 0.12s ease,
+        border-color 0.12s ease;
+    }
+    .end-stat.is-clickable:hover {
+      transform: translateY(-1px);
+      border-color: #88aef0;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06),
+        0 0 0 1px rgba(136, 174, 240, 0.6), 0 6px 18px rgba(0, 0, 0, 0.35);
+    }
+    .end-stat.is-clickable:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+    .end-stat.is-clickable .end-stat-value {
+      color: #ffd58a;
+      text-decoration: underline;
+      text-decoration-color: rgba(255, 213, 138, 0.5);
+      text-underline-offset: 4px;
+    }
+    .end-stat.is-clickable.is-zero .end-stat-value {
+      color: #9ef7c1;
+      text-decoration-color: rgba(158, 247, 193, 0.55);
+    }
+    .salute-layer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 2147483646;
+    }
+    .salute-piece {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 10px;
+      height: 14px;
+      border-radius: 2px;
+      opacity: 1;
+      will-change: transform, opacity;
     }
     button.primary {
       background: var(--accent);
@@ -420,15 +493,222 @@
     #help-fab:active {
       transform: scale(0.96);
     }
+    #info-fab {
+      position: fixed;
+      top: max(12px, env(safe-area-inset-top, 0px));
+      right: calc(max(14px, env(safe-area-inset-right, 0px)) + 60px);
+      bottom: auto;
+      left: auto;
+      z-index: 2147483647;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      border: 3px solid #fff;
+      background: linear-gradient(180deg, #5b8cde 0%, #2d5a9e 100%);
+      color: #fff;
+      font-size: 1.45rem;
+      font-weight: 800;
+      font-family: inherit;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.08);
+      line-height: 1;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+      -webkit-user-select: none;
+      box-sizing: border-box;
+      isolation: isolate;
+      -webkit-tap-highlight-color: transparent;
+    }
+    #info-fab:hover {
+      border-color: var(--accent);
+      color: #fff;
+    }
+    #info-fab:active {
+      transform: scale(0.96);
+    }
+    #series-fab {
+      position: fixed;
+      top: max(12px, env(safe-area-inset-top, 0px));
+      right: calc(max(14px, env(safe-area-inset-right, 0px)) + 120px);
+      bottom: auto;
+      left: auto;
+      z-index: 2147483647;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      border: 3px solid #fff;
+      background: linear-gradient(180deg, #5b8cde 0%, #2d5a9e 100%);
+      color: #fff;
+      font-family: inherit;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.08);
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+      -webkit-user-select: none;
+      box-sizing: border-box;
+      isolation: isolate;
+      -webkit-tap-highlight-color: transparent;
+    }
+    #series-fab:hover {
+      border-color: var(--accent);
+      color: #fff;
+    }
+    #series-fab:active {
+      transform: scale(0.96);
+    }
+    #series-fab[hidden] {
+      display: none !important;
+    }
+    .series-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.55);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 2147483646;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .series-overlay[hidden] {
+      display: none !important;
+    }
+    .series-picker-modal {
+      max-width: min(520px, 96vw);
+      max-height: min(86vh, 640px);
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      text-align: left;
+      padding: 22px 24px 18px;
+      overflow: hidden;
+    }
+    .series-picker-modal > h2,
+    .series-picker-modal > .series-picker-hint {
+      flex-shrink: 0;
+    }
+    .series-picker-list {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-gutter: stable;
+    }
+    .series-picker-modal h2 {
+      margin: 0 0 8px;
+      text-align: center;
+      font-size: 1.2rem;
+    }
+    .series-picker-hint {
+      margin: 0 0 14px;
+      font-size: 0.88rem;
+      color: var(--muted);
+      line-height: 1.45;
+      text-align: center;
+    }
+    .series-picker-sub {
+      margin: 14px 0 8px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+    .series-picker-sub:first-child {
+      margin-top: 0;
+    }
+    .series-picker-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      background: linear-gradient(180deg, #242a35 0%, #1a1f28 100%);
+      border: 1px solid #3a4252;
+      border-radius: 10px;
+    }
+    .series-picker-row input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+    .series-picker-playone {
+      flex: 1 1 auto;
+      text-align: left;
+      background: none;
+      border: none;
+      color: #e8ecf4;
+      font-size: 0.98rem;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 4px 0;
+      line-height: 1.35;
+      font-family: inherit;
+    }
+    .series-picker-playone:hover {
+      color: #9ec5ff;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+    .series-picker-footer {
+      flex-shrink: 0;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      justify-content: flex-end;
+      padding-top: 12px;
+      margin-top: 8px;
+      border-top: 1px solid #3a4252;
+    }
+    .series-picker-full {
+      margin-right: auto;
+      background: none;
+      border: none;
+      color: var(--accent);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      font-family: inherit;
+      padding: 8px 0;
+    }
+    .series-picker-full:hover {
+      filter: brightness(1.12);
+    }
+    .series-footer-btn {
+      background: #2a3140;
+      color: #e8ecf4;
+      border: 1px solid #4a5568;
+      border-radius: 8px;
+      padding: 9px 18px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      font-weight: 600;
+      font-family: inherit;
+    }
+    .series-footer-btn:hover {
+      filter: brightness(1.08);
+    }
   </style>
 </head>
 <body>
   <div id="no-data" class="empty-data" hidden>
-    <p>Нет данных для игры. Добавьте папки <code>img_1</code>, <code>img_2</code>, … с PNG-файлами.
-    Имя файла задаёт верную строку: <code>i3.png</code> или <code>3i.png</code> — строка 3.</p>
-    <p>Запустите <code>build-game-data.ps1</code> или <code>launch.bat</code>.</p>
+    <p>Нет данных для игры. Добавьте папку <code>pics</code> с подпапками-сериями; в каждой серии файлы
+    <code>1.png</code> … <code>8.png</code> (класс = номер в имени). Имя папки = название набора в игре.</p>
+    <p>Запустите <code>build-game-data.ps1</code> или <code>launch.bat</code>. Старые <code>img_*</code> можно перенести скриптом <code>migrate-legacy-img-to-pics.ps1</code>.</p>
     <p>
-      <button type="button" class="js-open-briefing primary">Как устроено задание</button>
+      <button type="button" class="js-open-briefing primary">Как мы измеряем сложность</button>
     </p>
   </div>
   <main id="game-main" hidden>
@@ -437,8 +717,8 @@
         <button
           type="button"
           class="js-open-briefing help-inline-btn"
-          aria-label="Как устроено задание"
-          title="Как устроено задание"
+          aria-label="Как мы измеряем сложность"
+          title="Как мы измеряем сложность"
         >?</button>
         <div class="meta game-stats" id="game-stats" aria-live="polite"></div>
       </div>
@@ -471,12 +751,56 @@
     </div>
   </div>
 
+  <div id="series-overlay" class="series-overlay" hidden>
+    <div
+      class="modal series-picker-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="series-picker-title"
+    >
+      <h2 id="series-picker-title">Серии</h2>
+      <p class="series-picker-hint">
+        Нажмите название — игра только из этой серии (слов или картинок). Можно отметить галочками несколько серий
+        в обоих разделах и нажать ОК — сначала пойдут выбранные словесные серии, затем картиночные.
+      </p>
+      <div id="series-picker-list" class="series-picker-list"></div>
+      <div class="series-picker-footer">
+        <button type="button" class="series-picker-full" id="series-picker-full">
+          Все серии и картинки
+        </button>
+        <button type="button" class="series-footer-btn" id="series-picker-cancel">Отмена</button>
+        <button type="button" class="primary" id="series-picker-ok">ОК</button>
+      </div>
+    </div>
+  </div>
+
+  <button
+    type="button"
+    id="series-fab"
+    aria-label="Список серий"
+    title="Серии (слова и картинки)"
+    hidden
+    style="position:fixed;top:12px;right:134px;z-index:2147483647"
+  >
+    <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true" focusable="false">
+      <path fill="currentColor" d="M3 5.5h16v1.7H3zm0 4.65h16v1.7H3zm0 4.65h12v1.7H3z"/>
+    </svg>
+  </button>
+
+  <button
+    type="button"
+    id="info-fab"
+    aria-label="Подвести итог"
+    title="Подвести итог"
+    style="position:fixed;top:12px;right:76px;z-index:2147483647"
+  >!</button>
+
   <button
     type="button"
     id="help-fab"
     class="help-fab js-open-briefing"
-    aria-label="Как устроено задание"
-    title="Как устроено задание"
+    aria-label="Как мы измеряем сложность"
+    title="Как мы измеряем сложность"
     style="position:fixed;top:12px;right:16px;z-index:2147483647"
   >?</button>
 
@@ -512,6 +836,12 @@
       const modalStatTasks = document.getElementById("modal-stat-tasks");
       const modalStatErrors = document.getElementById("modal-stat-errors");
       const modalBtn = document.getElementById("modal-btn");
+      const seriesOverlay = document.getElementById("series-overlay");
+      const seriesPickerList = document.getElementById("series-picker-list");
+      const seriesPickerOk = document.getElementById("series-picker-ok");
+      const seriesPickerCancel = document.getElementById("series-picker-cancel");
+      const seriesPickerFull = document.getElementById("series-picker-full");
+      const seriesFab = document.getElementById("series-fab");
       function wireHelpButtons() {
         document.querySelectorAll(".js-open-briefing").forEach(function (btn) {
           btn.addEventListener("click", function (e) {
@@ -529,25 +859,61 @@
       }
 
       let wordGroups = [];
+      let wordSeriesTitles = [];
+
+      function escapeHtml(s) {
+        return String(s)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
 
       function parseWordsText(raw) {
         const groups = [];
+        const titles = [];
         const re = /\{([\s\S]*?)\}/g;
         let m;
         while ((m = re.exec(raw)) !== null) {
-          const parts = m[1].split(",");
-          const words = parts
+          const parts = m[1]
+            .split(",")
             .map(function (s) {
               return s.replace(/\s+/g, " ").trim();
             })
             .filter(function (s) {
               return s.length > 0;
             });
-          if (words.length === 8) {
+          var words = null;
+          var seriesTitle = null;
+          if (parts.length === 9) {
+            var onlyParen = parts[8].match(/^\(([\s\S]*)\)$/);
+            if (onlyParen) {
+              seriesTitle = onlyParen[1].replace(/\s+/g, " ").trim();
+              if (seriesTitle.length === 0) seriesTitle = null;
+              words = parts.slice(0, 8);
+            } else {
+              words = parts.slice(0, 8);
+              seriesTitle = null;
+            }
+          }
+          if (!words && parts.length === 8) {
+            var last = parts[7];
+            var inline = last.match(/^([\s\S]+?)\s*\(([\s\S]+)\)\s*$/);
+            if (inline) {
+              var w8 = inline[1].replace(/\s+/g, " ").trim();
+              seriesTitle = inline[2].replace(/\s+/g, " ").trim();
+              if (seriesTitle.length === 0) seriesTitle = null;
+              words = parts.slice(0, 7).concat([w8]);
+            } else {
+              words = parts.slice();
+            }
+          }
+          if (words && words.length === 8) {
             groups.push(words);
+            titles.push(seriesTitle);
           }
         }
-        return groups;
+        return { groups: groups, titles: titles };
       }
 
       function getWordGroup(wi) {
@@ -556,23 +922,109 @@
       }
 
       let plan = [];
+      let planFull = [];
+      let planFilterWordIndices = null;
+      let planFilterPicIndices = null;
       let stepIndex = 0;
       let activeWordGroupIdx = null;
       let activePicsLevelIdx = null;
 
-      function rebuildPlan() {
-        plan.length = 0;
+      function rebuildPlanFull() {
+        planFull.length = 0;
         const n = Math.max(wordGroups.length, levels.length);
         for (let i = 0; i < n; i++) {
           const wg = wordGroups[i];
           if (Array.isArray(wg) && wg.length === 8) {
-            plan.push({ kind: "words", wordIdx: i });
+            planFull.push({ kind: "words", wordIdx: i });
           }
           const lv = levels[i];
           if (lv && Array.isArray(lv.images) && lv.images.length > 0) {
-            plan.push({ kind: "pics", levelIdx: i });
+            planFull.push({ kind: "pics", levelIdx: i });
           }
         }
+      }
+
+      function applyActivePlan() {
+        plan.length = 0;
+        const full =
+          planFilterWordIndices === null && planFilterPicIndices === null;
+        if (full) {
+          for (var pi = 0; pi < planFull.length; pi++) {
+            plan.push(planFull[pi]);
+          }
+          return;
+        }
+        if (Array.isArray(planFilterWordIndices) && planFilterWordIndices.length > 0) {
+          const seenW = Object.create(null);
+          for (var jw = 0; jw < planFilterWordIndices.length; jw++) {
+            const wix = planFilterWordIndices[jw];
+            if (typeof wix !== "number" || wix < 0 || seenW[wix]) continue;
+            if (!getWordGroup(wix)) continue;
+            seenW[wix] = true;
+          }
+          const keysW = Object.keys(seenW)
+            .map(function (k) {
+              return parseInt(k, 10);
+            })
+            .sort(function (a, b) {
+              return a - b;
+            });
+          for (var kw = 0; kw < keysW.length; kw++) {
+            plan.push({ kind: "words", wordIdx: keysW[kw] });
+          }
+        }
+        if (Array.isArray(planFilterPicIndices) && planFilterPicIndices.length > 0) {
+          const seenP = Object.create(null);
+          for (var jp = 0; jp < planFilterPicIndices.length; jp++) {
+            const lix = planFilterPicIndices[jp];
+            if (typeof lix !== "number" || lix < 0 || seenP[lix]) continue;
+            const lv = levels[lix];
+            if (!lv || !Array.isArray(lv.images) || lv.images.length === 0) continue;
+            seenP[lix] = true;
+          }
+          const keysP = Object.keys(seenP)
+            .map(function (k) {
+              return parseInt(k, 10);
+            })
+            .sort(function (a, b) {
+              return a - b;
+            });
+          for (var kp = 0; kp < keysP.length; kp++) {
+            plan.push({ kind: "pics", levelIdx: keysP[kp] });
+          }
+        }
+      }
+
+      function getWordSeriesLabel(i) {
+        if (!getWordGroup(i)) return "";
+        const t = wordSeriesTitles[i];
+        if (t && String(t).trim()) return String(t).trim();
+        const wg = wordGroups[i];
+        let hint = wg[0] ? String(wg[0]) : "";
+        if (hint.length > 42) hint = hint.slice(0, 42) + "…";
+        return "Серия " + (i + 1) + (hint ? " — «" + hint + "»" : "");
+      }
+
+      function getPicSeriesLabel(li) {
+        const lv = levels[li];
+        if (!lv || !Array.isArray(lv.images) || lv.images.length === 0) return "";
+        const id = lv.id != null ? String(lv.id).trim() : "";
+        if (id.length > 0) return id;
+        return "Набор " + (li + 1);
+      }
+
+      function updateSeriesFabVisibility() {
+        if (!seriesFab) return;
+        let wn = 0;
+        for (let i = 0; i < wordGroups.length; i++) {
+          if (getWordGroup(i)) wn += 1;
+        }
+        let pn = 0;
+        for (let li = 0; li < levels.length; li++) {
+          const lv = levels[li];
+          if (lv && Array.isArray(lv.images) && lv.images.length > 0) pn += 1;
+        }
+        seriesFab.hidden = wn === 0 && pn === 0;
       }
 
       function loadWordsThenStart() {
@@ -584,13 +1036,41 @@
             return r.text();
           })
           .then(function (t) {
-            wordGroups = parseWordsText(t);
+            var parsed = parseWordsText(t);
+            wordGroups = parsed.groups;
+            wordSeriesTitles = parsed.titles;
           })
           .catch(function () {
             wordGroups = [];
+            wordSeriesTitles = [];
           })
           .finally(function () {
-            rebuildPlan();
+            if (
+              Array.isArray(planFilterWordIndices) &&
+              planFilterWordIndices.length > 0
+            ) {
+              planFilterWordIndices = planFilterWordIndices.filter(function (idx) {
+                return getWordGroup(idx);
+              });
+              if (planFilterWordIndices.length === 0) {
+                planFilterWordIndices = null;
+              }
+            }
+            if (
+              Array.isArray(planFilterPicIndices) &&
+              planFilterPicIndices.length > 0
+            ) {
+              planFilterPicIndices = planFilterPicIndices.filter(function (li) {
+                const lv = levels[li];
+                return lv && Array.isArray(lv.images) && lv.images.length > 0;
+              });
+              if (planFilterPicIndices.length === 0) {
+                planFilterPicIndices = null;
+              }
+            }
+            rebuildPlanFull();
+            applyActivePlan();
+            updateSeriesFabVisibility();
             if (plan.length === 0) {
               noDataEl.hidden = false;
               return;
@@ -610,6 +1090,33 @@
       let txtLabelIndex = 0;
       let tasksDone = 0;
       let mistakeCount = 0;
+      let wrongCases = [];
+      let wrongCaseKeys = Object.create(null);
+      let currentCaseKey = null;
+      let currentCase = null;
+      let currentCaseRecorded = false;
+      let reviewMode = false;
+      let reviewQueue = [];
+      let reviewIndex = 0;
+
+      const GLOBAL_LOG_KEY = "game.errorLog.v1";
+      let globalErrorLog = [];
+      try {
+        const stored = window.localStorage.getItem(GLOBAL_LOG_KEY);
+        if (typeof stored === "string" && stored.length > 0) {
+          globalErrorLog = stored.split("").filter(function (ch) {
+            return ch >= "1" && ch <= "8";
+          });
+        }
+      } catch (e) {}
+      function persistGlobalErrorLog() {
+        try {
+          window.localStorage.setItem(
+            GLOBAL_LOG_KEY,
+            globalErrorLog.join("")
+          );
+        } catch (e) {}
+      }
 
       function updateGameStats() {
         gameStats.textContent =
@@ -619,7 +1126,31 @@
       function resetSessionStats() {
         tasksDone = 0;
         mistakeCount = 0;
+        wrongCases = [];
+        wrongCaseKeys = Object.create(null);
+        currentCaseKey = null;
+        currentCase = null;
+        currentCaseRecorded = false;
         updateGameStats();
+      }
+
+      function setActiveCase(caseObj) {
+        currentCase = caseObj;
+        currentCaseKey = caseObj ? caseObj.key : null;
+        currentCaseRecorded = false;
+      }
+
+      function recordCurrentMistake() {
+        if (!currentCase || currentCaseRecorded) return;
+        currentCaseRecorded = true;
+        if (wrongCaseKeys[currentCaseKey]) return;
+        wrongCaseKeys[currentCaseKey] = true;
+        wrongCases.push(currentCase);
+        const n = currentCase.classNum;
+        if (typeof n === "number" && n >= 1 && n <= 8) {
+          globalErrorLog.push(n);
+          persistGlobalErrorLog();
+        }
       }
 
       function squareIconSrc(classNum) {
@@ -740,10 +1271,132 @@
         });
       }
 
+      function closeSeriesPicker() {
+        if (seriesOverlay) seriesOverlay.hidden = true;
+      }
+
+      function buildSeriesPickerList() {
+        if (!seriesPickerList) return;
+        seriesPickerList.textContent = "";
+        const frag = document.createDocumentFragment();
+        let hasWords = false;
+        for (let iw = 0; iw < wordGroups.length; iw++) {
+          if (getWordGroup(iw)) {
+            hasWords = true;
+            break;
+          }
+        }
+        let hasPics = false;
+        for (let lix = 0; lix < levels.length; lix++) {
+          const lv0 = levels[lix];
+          if (lv0 && Array.isArray(lv0.images) && lv0.images.length > 0) {
+            hasPics = true;
+            break;
+          }
+        }
+        if (hasWords) {
+          const hw = document.createElement("h3");
+          hw.className = "series-picker-sub";
+          hw.textContent = "Словесные серии";
+          frag.appendChild(hw);
+          for (let i = 0; i < wordGroups.length; i++) {
+            if (!getWordGroup(i)) continue;
+            const row = document.createElement("div");
+            row.className = "series-picker-row";
+            const cb = document.createElement("input");
+            cb.type = "checkbox";
+            cb.setAttribute("data-word-idx", String(i));
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "series-picker-playone";
+            btn.setAttribute("data-word-idx", String(i));
+            btn.textContent = getWordSeriesLabel(i);
+            btn.addEventListener("click", function (ev) {
+              ev.preventDefault();
+              ev.stopPropagation();
+              const wi = parseInt(ev.currentTarget.getAttribute("data-word-idx"), 10);
+              if (wi !== wi || !getWordGroup(wi)) return;
+              planFilterWordIndices = [wi];
+              planFilterPicIndices = null;
+              closeSeriesPicker();
+              restartFromPlanSelection();
+            });
+            row.appendChild(cb);
+            row.appendChild(btn);
+            frag.appendChild(row);
+          }
+        }
+        if (hasPics) {
+          const hp = document.createElement("h3");
+          hp.className = "series-picker-sub";
+          hp.textContent = "Картиночные серии";
+          frag.appendChild(hp);
+          for (let li = 0; li < levels.length; li++) {
+            const lv = levels[li];
+            if (!lv || !Array.isArray(lv.images) || lv.images.length === 0) continue;
+            const row = document.createElement("div");
+            row.className = "series-picker-row";
+            const cb = document.createElement("input");
+            cb.type = "checkbox";
+            cb.setAttribute("data-level-idx", String(li));
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "series-picker-playone";
+            btn.setAttribute("data-level-idx", String(li));
+            btn.textContent = getPicSeriesLabel(li);
+            btn.addEventListener("click", function (ev) {
+              ev.preventDefault();
+              ev.stopPropagation();
+              const idx = parseInt(ev.currentTarget.getAttribute("data-level-idx"), 10);
+              const lvx = levels[idx];
+              if (idx !== idx || !lvx || !Array.isArray(lvx.images) || lvx.images.length === 0) return;
+              planFilterWordIndices = null;
+              planFilterPicIndices = [idx];
+              closeSeriesPicker();
+              restartFromPlanSelection();
+            });
+            row.appendChild(cb);
+            row.appendChild(btn);
+            frag.appendChild(row);
+          }
+        }
+        seriesPickerList.appendChild(frag);
+      }
+
+      function openSeriesPicker() {
+        if (!seriesOverlay || !seriesPickerList) return;
+        buildSeriesPickerList();
+        seriesOverlay.hidden = false;
+      }
+
+      function restartFromPlanSelection() {
+        applyActivePlan();
+        if (plan.length === 0) {
+          noDataEl.hidden = false;
+          mainEl.hidden = true;
+          return;
+        }
+        noDataEl.hidden = true;
+        mainEl.hidden = false;
+        overlay.hidden = true;
+        resetModalChrome();
+        if (picShrinkTimer !== null) {
+          window.clearTimeout(picShrinkTimer);
+          picShrinkTimer = null;
+        }
+        busy = false;
+        reviewMode = false;
+        reviewQueue = [];
+        reviewIndex = 0;
+        resetSessionStats();
+        stepIndex = 0;
+        beginPlayFromBriefing();
+      }
+
       function showBriefingIntro(continueFn) {
         resetModalChrome();
         gameModal.classList.add("modal--briefing");
-        modalTitle.textContent = "Как устроено задание";
+        modalTitle.textContent = "Как мы измеряем сложность";
         modalText.innerHTML =
           "<p>Мы с детства, сами того не замечая, делим ситуации на классы сложности. Этих классов восемь, и я обозначил их номерами и квадратами с пиктограммой.</p>" +
           "<p>Ваша задача — отнести ситуацию на картинке к одному из классов; то же самое — с фразами и ключевыми словами. Выбрав класс слева, нажмите на клавишу.</p>";
@@ -818,6 +1471,7 @@
       function hideStageTextCard() {
         stageTextCard.hidden = true;
         stageTextCard.textContent = "";
+        stageTextCard.innerHTML = "";
         currentImg.hidden = false;
       }
 
@@ -832,6 +1486,7 @@
           currentImg.removeAttribute("title");
           currentWrap.hidden = true;
           currentImg.classList.remove("shrink-out");
+          setActiveCase(null);
           return;
         }
         currentWrap.hidden = false;
@@ -839,6 +1494,13 @@
         currentImg.alt = "";
         currentImg.removeAttribute("title");
         currentImg.classList.remove("shrink-out");
+        setActiveCase({
+          kind: "pics",
+          levelIdx: activePicsLevelIdx,
+          file: current.file,
+          classNum: current.class,
+          key: "pics|" + activePicsLevelIdx + "|" + current.file,
+        });
         if (phase === "pics" && queue.length > 1) {
           preloadQueueAhead();
         }
@@ -859,19 +1521,57 @@
           currentImg.classList.remove("stage-txt");
           currentImg.hidden = true;
           stageTextCard.hidden = false;
-          stageTextCard.textContent = wg[c - 1];
+          stageTextCard.textContent = "";
+          var st =
+            activeWordGroupIdx != null &&
+            Array.isArray(wordSeriesTitles) &&
+            wordSeriesTitles[activeWordGroupIdx]
+              ? String(wordSeriesTitles[activeWordGroupIdx]).trim()
+              : "";
+          var wordHtml =
+            '<div class="stage-text-main">' +
+            escapeHtml(wg[c - 1]) +
+            "</div>";
+          if (st.length > 0) {
+            stageTextCard.innerHTML =
+              '<div class="stage-text-series">серия: ' +
+              escapeHtml(st) +
+              "</div>" +
+              wordHtml;
+          } else {
+            stageTextCard.innerHTML = wordHtml;
+          }
+          setActiveCase({
+            kind: "words",
+            wordIdx: activeWordGroupIdx,
+            classNum: c,
+            key: "words|" + activeWordGroupIdx + "|" + c,
+          });
         } else {
           hideStageTextCard();
           currentImg.classList.add("stage-txt");
           currentImg.src = txt2imgIconSrc(c);
           currentImg.alt = "";
           currentImg.removeAttribute("title");
+          setActiveCase({
+            kind: "txtIcon",
+            classNum: c,
+            key: "txtIcon|" + c,
+          });
         }
 
-        levelMeta.textContent =
-          "Шаг " +
-          (txtLabelIndex + 1) +
-          " из 8 — нажмите правильную клавишу";
+        if (reviewMode) {
+          levelMeta.textContent =
+            "Повтор ошибок · " +
+            (reviewIndex + 1) +
+            " из " +
+            reviewQueue.length;
+        } else {
+          levelMeta.textContent =
+            "Шаг " +
+            (txtLabelIndex + 1) +
+            " из 8 — нажмите правильную клавишу";
+        }
       }
 
       function flashRow(classNum, ok) {
@@ -888,6 +1588,7 @@
         const target = txtLabelQueue[txtLabelIndex];
         if (chosen !== target) {
           mistakeCount += 1;
+          recordCurrentMistake();
           updateGameStats();
           feedback.textContent = "Не та клавиша — попробуйте ещё раз.";
           feedback.className = "bad";
@@ -916,8 +1617,13 @@
         txtLabelIndex += 1;
 
         if (txtLabelIndex >= txtLabelQueue.length) {
-          stepIndex += 1;
-          startCurrentStep();
+          if (reviewMode) {
+            reviewIndex += 1;
+            presentReviewItem();
+          } else {
+            stepIndex += 1;
+            startCurrentStep();
+          }
         } else {
           showTxtChallenge();
         }
@@ -970,8 +1676,14 @@
               currentWrap.hidden = true;
               currentImg.classList.remove("shrink-out");
               busy = false;
-              stepIndex += 1;
-              startCurrentStep();
+              setActiveCase(null);
+              if (reviewMode) {
+                reviewIndex += 1;
+                presentReviewItem();
+              } else {
+                stepIndex += 1;
+                startCurrentStep();
+              }
               return;
             }
 
@@ -982,6 +1694,13 @@
             var nextUrl = folderPath(current);
             currentImg.alt = "";
             currentImg.removeAttribute("title");
+            setActiveCase({
+              kind: "pics",
+              levelIdx: activePicsLevelIdx,
+              file: current.file,
+              classNum: current.class,
+              key: "pics|" + activePicsLevelIdx + "|" + current.file,
+            });
 
             var revealed = false;
             var revealCapTimer = null;
@@ -1012,6 +1731,7 @@
           }, PIC_SHRINK_WAIT_MS);
         } else {
           mistakeCount += 1;
+          recordCurrentMistake();
           updateGameStats();
           feedback.textContent = "Не та строка — попробуйте ещё раз.";
           feedback.className = "bad";
@@ -1022,11 +1742,200 @@
         }
       }
 
+      function presentReviewItem() {
+        if (reviewIndex >= reviewQueue.length) {
+          showGameEndKonets();
+          return;
+        }
+        const it = reviewQueue[reviewIndex];
+        busy = false;
+        feedback.textContent = "";
+        feedback.className = "";
+        if (picShrinkTimer !== null) {
+          window.clearTimeout(picShrinkTimer);
+          picShrinkTimer = null;
+        }
+        if (it.kind === "pics") {
+          activeWordGroupIdx = null;
+          activePicsLevelIdx = it.levelIdx;
+          phase = "pics";
+          queue = [{ file: it.file, class: it.classNum }];
+          current = queue[0];
+          hideStageTextCard();
+          currentImg.classList.remove("stage-txt");
+          showCurrent();
+        } else {
+          activeWordGroupIdx = it.kind === "words" ? it.wordIdx : null;
+          activePicsLevelIdx = null;
+          phase = "labels";
+          txtLabelQueue = [it.classNum];
+          txtLabelIndex = 0;
+          current = null;
+          hideStageTextCard();
+          showTxtChallenge();
+        }
+      }
+
+      function buildErrorLog() {
+        return globalErrorLog.join("");
+      }
+
+      function downloadErrorLog() {
+        const text = buildErrorLog();
+        const blob = new Blob([text], {
+          type: "text/plain;charset=utf-8",
+        });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "log.txt";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.setTimeout(function () {
+          URL.revokeObjectURL(url);
+        }, 1500);
+      }
+
+      var saluteTimer = null;
+      var saluteRaf = null;
+      var saluteLayer = null;
+      function fireSalute() {
+        if (saluteLayer && saluteLayer.parentNode) {
+          saluteLayer.parentNode.removeChild(saluteLayer);
+        }
+        if (saluteTimer !== null) {
+          window.clearTimeout(saluteTimer);
+          saluteTimer = null;
+        }
+        if (saluteRaf !== null) {
+          window.cancelAnimationFrame(saluteRaf);
+          saluteRaf = null;
+        }
+        const layer = document.createElement("div");
+        layer.className = "salute-layer";
+        const colors = [
+          "#ffd166",
+          "#ef476f",
+          "#06d6a0",
+          "#118ab2",
+          "#8338ec",
+          "#fb5607",
+          "#3a86ff",
+          "#ff006e",
+          "#ffbe0b",
+        ];
+        const count = 120;
+        const vh = Math.max(
+          document.documentElement.clientHeight || 0,
+          window.innerHeight || 0
+        );
+        const vw = Math.max(
+          document.documentElement.clientWidth || 0,
+          window.innerWidth || 0
+        );
+        const pieces = [];
+        for (let i = 0; i < count; i++) {
+          const piece = document.createElement("span");
+          piece.className = "salute-piece";
+          const w = 6 + Math.random() * 8;
+          const h = 10 + Math.random() * 10;
+          piece.style.width = w + "px";
+          piece.style.height = h + "px";
+          piece.style.background = colors[i % colors.length];
+          piece.style.left = "0px";
+          piece.style.top = "0px";
+          piece.style.opacity = "1";
+          const startX = Math.random() * vw;
+          const startY = -30 - Math.random() * 200;
+          const vx = (Math.random() - 0.5) * 80;
+          const vy = 180 + Math.random() * 220;
+          const rot0 = Math.random() * 360;
+          const rotVel = (Math.random() - 0.5) * 540;
+          piece.style.transform =
+            "translate(" + startX + "px," + startY + "px) rotate(" + rot0 + "deg)";
+          layer.appendChild(piece);
+          pieces.push({
+            el: piece,
+            x: startX,
+            y: startY,
+            vx: vx,
+            vy: vy,
+            r: rot0,
+            rv: rotVel,
+          });
+        }
+        document.body.appendChild(layer);
+        saluteLayer = layer;
+        const startTs = performance.now();
+        const duration = 5200;
+        let prev = startTs;
+        function step(ts) {
+          const dt = Math.min(0.05, (ts - prev) / 1000);
+          prev = ts;
+          const elapsed = ts - startTs;
+          let alive = false;
+          for (let i = 0; i < pieces.length; i++) {
+            const p = pieces[i];
+            if (p.y > vh + 40) continue;
+            p.vy += 90 * dt;
+            p.x += p.vx * dt;
+            p.y += p.vy * dt;
+            p.r += p.rv * dt;
+            p.el.style.transform =
+              "translate(" + p.x + "px," + p.y + "px) rotate(" + p.r + "deg)";
+            if (elapsed > duration - 800) {
+              const fade = Math.max(0, 1 - (elapsed - (duration - 800)) / 800);
+              p.el.style.opacity = String(fade);
+            }
+            if (p.y <= vh + 40) alive = true;
+          }
+          if (alive && elapsed < duration) {
+            saluteRaf = window.requestAnimationFrame(step);
+          } else {
+            saluteRaf = null;
+            if (saluteLayer && saluteLayer.parentNode) {
+              saluteLayer.parentNode.removeChild(saluteLayer);
+            }
+            saluteLayer = null;
+          }
+        }
+        saluteRaf = window.requestAnimationFrame(step);
+        saluteTimer = window.setTimeout(function () {
+          if (saluteRaf !== null) {
+            window.cancelAnimationFrame(saluteRaf);
+            saluteRaf = null;
+          }
+          if (saluteLayer && saluteLayer.parentNode) {
+            saluteLayer.parentNode.removeChild(saluteLayer);
+          }
+          saluteLayer = null;
+          saluteTimer = null;
+        }, duration + 500);
+      }
+
+      function startReviewSession(items) {
+        if (!items || items.length === 0) return;
+        const itemsCopy = items.slice();
+        overlay.hidden = true;
+        resetModalChrome();
+        mainEl.hidden = false;
+        currentWrap.hidden = false;
+        buildRows();
+        resetSessionStats();
+        reviewMode = true;
+        reviewQueue = itemsCopy;
+        reviewIndex = 0;
+        presentReviewItem();
+      }
+
       function showGameEndKonets() {
+        closeSeriesPicker();
         overlay.hidden = false;
         resetModalChrome();
         stageTextCard.hidden = true;
         stageTextCard.textContent = "";
+        stageTextCard.innerHTML = "";
         currentImg.removeAttribute("src");
         currentImg.alt = "";
         currentImg.removeAttribute("title");
@@ -1040,6 +1949,52 @@
         modalEndStats.hidden = false;
         modalStatTasks.textContent = String(tasksDone);
         modalStatErrors.textContent = String(mistakeCount);
+
+        const errorsCard = modalStatErrors.parentElement;
+        errorsCard.classList.remove("is-clickable", "is-zero");
+        errorsCard.removeAttribute("role");
+        errorsCard.removeAttribute("tabindex");
+        errorsCard.removeAttribute("title");
+        errorsCard.onclick = null;
+        errorsCard.onkeydown = null;
+
+        if (mistakeCount === 0) {
+          errorsCard.classList.add("is-clickable", "is-zero");
+          errorsCard.setAttribute("role", "button");
+          errorsCard.setAttribute("tabindex", "0");
+          errorsCard.setAttribute("title", "Скачать log.txt");
+          const onZero = function () {
+            downloadErrorLog();
+          };
+          errorsCard.onclick = onZero;
+          errorsCard.onkeydown = function (e) {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              onZero();
+            }
+          };
+          fireSalute();
+        } else if (wrongCases.length > 0) {
+          const casesForReview = wrongCases.slice();
+          errorsCard.classList.add("is-clickable");
+          errorsCard.setAttribute("role", "button");
+          errorsCard.setAttribute("tabindex", "0");
+          errorsCard.setAttribute(
+            "title",
+            "Повторить случаи с ошибками (" + casesForReview.length + ")"
+          );
+          const startReview = function () {
+            startReviewSession(casesForReview);
+          };
+          errorsCard.onclick = startReview;
+          errorsCard.onkeydown = function (e) {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              startReview();
+            }
+          };
+        }
+
         modalBtn.textContent = "СНАЧАЛА";
         modalBtn.classList.add("btn-compact");
         modalBtn.onclick = function () {
@@ -1049,6 +2004,9 @@
           feedback.textContent = "";
           feedback.className = "";
           busy = false;
+          reviewMode = false;
+          reviewQueue = [];
+          reviewIndex = 0;
           resetSessionStats();
           stepIndex = 0;
           beginPlayFromBriefing();
@@ -1057,10 +2015,102 @@
       }
 
       document.addEventListener("keydown", function (e) {
+        if (seriesOverlay && seriesOverlay.hidden === false) {
+          if (e.key === "Escape") {
+            e.preventDefault();
+            closeSeriesPicker();
+          }
+          return;
+        }
         if (overlay.hidden === false) return;
         const n = parseInt(e.key, 10);
         if (n >= 1 && n <= 8) onPick(n);
       });
+
+      if (seriesFab) {
+        seriesFab.addEventListener("click", function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          openSeriesPicker();
+        });
+      }
+      if (seriesPickerCancel) {
+        seriesPickerCancel.addEventListener("click", function (e) {
+          e.preventDefault();
+          closeSeriesPicker();
+        });
+      }
+      if (seriesOverlay) {
+        seriesOverlay.addEventListener("click", function (e) {
+          if (e.target === seriesOverlay) closeSeriesPicker();
+        });
+      }
+      if (seriesPickerFull) {
+        seriesPickerFull.addEventListener("click", function (e) {
+          e.preventDefault();
+          planFilterWordIndices = null;
+          planFilterPicIndices = null;
+          closeSeriesPicker();
+          restartFromPlanSelection();
+        });
+      }
+      if (seriesPickerOk) {
+        seriesPickerOk.addEventListener("click", function (e) {
+          e.preventDefault();
+          if (!seriesPickerList) return;
+          const wPicked = [];
+          seriesPickerList
+            .querySelectorAll('input[type=checkbox][data-word-idx]')
+            .forEach(function (cb) {
+              if (!cb.checked) return;
+              const wi = parseInt(cb.getAttribute("data-word-idx"), 10);
+              if (wi === wi && getWordGroup(wi)) wPicked.push(wi);
+            });
+          const pPicked = [];
+          seriesPickerList
+            .querySelectorAll('input[type=checkbox][data-level-idx]')
+            .forEach(function (cb) {
+              if (!cb.checked) return;
+              const li = parseInt(cb.getAttribute("data-level-idx"), 10);
+              const lv = levels[li];
+              if (li === li && lv && Array.isArray(lv.images) && lv.images.length > 0) {
+                pPicked.push(li);
+              }
+            });
+          if (wPicked.length === 0 && pPicked.length === 0) {
+            window.alert(
+              "Отметьте хотя бы одну серию (словесную или картиночную) или нажмите на название."
+            );
+            return;
+          }
+          if (wPicked.length > 0 && pPicked.length === 0) {
+            planFilterWordIndices = wPicked;
+            planFilterPicIndices = null;
+          } else if (wPicked.length === 0 && pPicked.length > 0) {
+            planFilterWordIndices = null;
+            planFilterPicIndices = pPicked;
+          } else {
+            planFilterWordIndices = wPicked;
+            planFilterPicIndices = pPicked;
+          }
+          closeSeriesPicker();
+          restartFromPlanSelection();
+        });
+      }
+
+      var infoFab = document.getElementById("info-fab");
+      if (infoFab) {
+        infoFab.addEventListener("click", function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          if (picShrinkTimer !== null) {
+            window.clearTimeout(picShrinkTimer);
+            picShrinkTimer = null;
+          }
+          busy = false;
+          showGameEndKonets();
+        });
+      }
 
       loadWordsThenStart();
     })();

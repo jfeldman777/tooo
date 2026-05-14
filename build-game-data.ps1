@@ -1,55 +1,51 @@
-# Сканирует папки img_1, img_2, ... и пишет game-data.js (класс из имени: 4i.png -> 4, i1.png -> 1).
+# Scans pics/<series_name>/ for files 1.png .. 8.png (also .webp .jpg .jpeg .gif).
+# Series title in game = folder name. Writes game-data.js (folder: pics/FolderName).
 $ErrorActionPreference = "Stop"
 $root = $PSScriptRoot
+$picsRoot = Join-Path $root "pics"
 
-function Get-ClassFromFilename([string]$name) {
-    $m = [regex]::Match($name, '^(\d+)i\.', [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
-    if ($m.Success) { return [int]$m.Groups[1].Value }
-    $m2 = [regex]::Match($name, '^i(\d+)\.', [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
-    if ($m2.Success) { return [int]$m2.Groups[1].Value }
-    $m3 = [regex]::Match($name, '^(\d+)a\.', [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
-    if ($m3.Success) { return [int]$m3.Groups[1].Value }
+$imageExts = @(".png", ".webp", ".jpg", ".jpeg", ".gif")
+
+function Find-ClassFile([string]$seriesDir, [int]$classNum) {
+    foreach ($ext in $imageExts) {
+        $name = "$classNum$ext"
+        $full = Join-Path $seriesDir $name
+        if (Test-Path -LiteralPath $full) {
+            return Get-Item -LiteralPath $full
+        }
+    }
     return $null
 }
 
-$dirs = Get-ChildItem -LiteralPath $root -Directory -ErrorAction SilentlyContinue |
-    Where-Object { $_.Name -match '^img_(\d+)$' } |
-    Sort-Object { [int]($_.Name -replace '^img_', '') }
+if (-not (Test-Path -LiteralPath $picsRoot)) {
+    Write-Warning "Folder pics not found. Create pics\SeriesName\ with 1.png..8.png or run migrate-legacy-img-to-pics.ps1."
+}
 
-if (-not $dirs) {
-    Write-Warning "No folders img_1, img_2, ... found."
+$seriesDirs = @()
+if (Test-Path -LiteralPath $picsRoot) {
+    $seriesDirs = @(Get-ChildItem -LiteralPath $picsRoot -Directory -ErrorAction SilentlyContinue |
+            Sort-Object Name)
 }
 
 $levels = New-Object System.Collections.Generic.List[object]
-foreach ($d in $dirs) {
-    $pics = @(Get-ChildItem -LiteralPath $d.FullName -File -ErrorAction SilentlyContinue |
-        Where-Object { $_.Extension -match '^\.(png|jpg|jpeg|webp|gif)$' } |
-        Sort-Object @{ Expression = { switch ($_.Extension.ToLowerInvariant()) {
-                    '.png' { 0 } '.webp' { 1 } '.gif' { 2 } '.jpg' { 3 } '.jpeg' { 4 } Default { 9 }
-                } } }, Name)
+foreach ($d in $seriesDirs) {
     $images = New-Object System.Collections.Generic.List[object]
-    $seenClass = @{}
-    foreach ($p in $pics) {
-        $cls = Get-ClassFromFilename $p.Name
-        if ($null -eq $cls) {
-            Write-Warning ("Skip (unknown filename pattern): $($d.Name)\$($p.Name)")
-            continue
+    for ($c = 1; $c -le 8; $c++) {
+        $hit = Find-ClassFile $d.FullName $c
+        if ($null -eq $hit) {
+            Write-Warning "Series $($d.Name): missing file for class $c (expected $c.png etc.) - series skipped."
+            $images = $null
+            break
         }
-        if ($cls -lt 1 -or $cls -gt 8) {
-            Write-Warning ("Skip (class not 1..8): $($p.Name) -> $cls")
-            continue
-        }
-        if ($seenClass.ContainsKey($cls)) {
-            continue
-        }
-        [void]$seenClass.Add($cls, $true)
-        [void]$images.Add([ordered]@{ file = $p.Name; class = $cls })
+        [void]$images.Add([ordered]@{ file = $hit.Name; class = $c })
     }
-    if ($images.Count -eq 0) { continue }
+    if ($null -eq $images) { continue }
+    if ($images.Count -ne 8) { continue }
 
+    $folderWeb = "pics/" + $d.Name.Replace("\", "/")
     [void]$levels.Add([ordered]@{
-            id = $d.Name
-            folder = $d.Name
+            id     = $d.Name
+            folder = $folderWeb
             images = $images.ToArray()
         })
 }
@@ -64,11 +60,12 @@ $levelObjs = foreach ($lvl in $levels) {
 $arr = @($levelObjs)
 if ($arr.Count -eq 0) {
     $json = "[]"
-} else {
+}
+else {
     $json = ConvertTo-Json -InputObject $arr -Depth 10 -Compress
 }
 $outPath = Join-Path $root "game-data.js"
 $js = "`"use strict`";`r`nwindow.GAME_LEVELS = $json;"
 [System.IO.File]::WriteAllText($outPath, $js, [System.Text.UTF8Encoding]::new($false))
 
-Write-Host "OK: $($arr.Count) sets -> $outPath"
+Write-Host "OK: $($arr.Count) series in pics -> $outPath"
