@@ -42,45 +42,12 @@
       color: var(--muted);
       margin-bottom: 10px;
     }
-    .meta-row {
-      display: flex;
-      align-items: center;
-      justify-content: flex-start;
-      gap: 12px;
-      flex-wrap: wrap;
-      margin-bottom: 10px;
-    }
-    .meta-row .game-stats {
-      flex: 1 1 auto;
-      min-width: 0;
-      margin-bottom: 0;
-    }
-    .help-inline-btn {
-      flex: 0 0 auto;
-      width: 44px;
-      height: 44px;
-      border-radius: 50%;
-      border: 3px solid #fff;
-      background: linear-gradient(180deg, #5b8cde 0%, #2d5a9e 100%);
-      color: #fff;
-      font-size: 1.25rem;
-      font-weight: 800;
-      font-family: inherit;
-      cursor: pointer;
-      line-height: 1;
-      padding: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
-    }
-    .help-inline-btn:hover {
-      filter: brightness(1.08);
-    }
     .game-stats {
       font-size: 0.9rem;
       color: #c5cad4;
       font-variant-numeric: tabular-nums;
+      line-height: 1.25;
+      min-width: 0;
     }
     .rows {
       display: flex;
@@ -146,6 +113,17 @@
     @media (max-width: 720px) {
       main {
         grid-template-columns: 1fr;
+        padding: 12px;
+        gap: 12px;
+      }
+      /* чтобы строка со счётом не заезжала под круглые кнопки справа */
+      main > div:first-of-type {
+        padding-right: calc(env(safe-area-inset-right, 0px) + 176px);
+      }
+    }
+    @media (max-width: 400px) {
+      main > div:first-of-type {
+        padding-right: calc(env(safe-area-inset-right, 0px) + 158px);
       }
     }
     .kbd-digit {
@@ -283,6 +261,12 @@
       border: 1px solid #c8ccd4;
       animation: thumbIn 0.45s ease;
     }
+    #level-meta {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
     #feedback {
       margin-top: 12px;
       min-height: 1.4em;
@@ -291,6 +275,43 @@
     }
     #feedback.bad { color: #f48a8a; }
     #feedback.ok { color: #7dd4b0; }
+    @media (max-width: 520px) {
+      #help-fab,
+      #info-fab,
+      #series-fab,
+      #book-fab {
+        width: 40px;
+        height: 40px;
+        border-width: 2px;
+        top: max(8px, env(safe-area-inset-top, 0px));
+      }
+      #help-fab {
+        right: max(8px, env(safe-area-inset-right, 0px));
+        font-size: 1.2rem;
+      }
+      #info-fab {
+        right: calc(max(8px, env(safe-area-inset-right, 0px)) + 48px);
+        font-size: 1.2rem;
+      }
+      #series-fab {
+        right: calc(max(8px, env(safe-area-inset-right, 0px)) + 96px);
+      }
+      #book-fab {
+        right: calc(max(8px, env(safe-area-inset-right, 0px)) + 144px);
+      }
+      .game-stats {
+        font-size: 0.76rem;
+      }
+      #level-meta {
+        font-size: 0.74rem;
+      }
+      #feedback {
+        font-size: 0.8rem;
+        margin-top: 8px;
+        padding: 0 4px;
+        line-height: 1.35;
+      }
+    }
     #overlay {
       position: fixed;
       inset: 0;
@@ -565,6 +586,40 @@
     #series-fab[hidden] {
       display: none !important;
     }
+    #book-fab {
+      position: fixed;
+      top: max(12px, env(safe-area-inset-top, 0px));
+      right: calc(max(14px, env(safe-area-inset-right, 0px)) + 180px);
+      bottom: auto;
+      left: auto;
+      z-index: 2147483647;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      border: 3px solid #fff;
+      background: linear-gradient(180deg, #5b8cde 0%, #2d5a9e 100%);
+      color: #fff;
+      font-family: inherit;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.08);
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      user-select: none;
+      -webkit-user-select: none;
+      box-sizing: border-box;
+      isolation: isolate;
+      -webkit-tap-highlight-color: transparent;
+    }
+    #book-fab:hover {
+      border-color: var(--accent);
+      color: #fff;
+    }
+    #book-fab:active {
+      transform: scale(0.96);
+    }
     .series-overlay {
       position: fixed;
       inset: 0;
@@ -713,15 +768,7 @@
   </div>
   <main id="game-main" hidden>
     <div>
-      <div class="meta-row">
-        <button
-          type="button"
-          class="js-open-briefing help-inline-btn"
-          aria-label="Как мы измеряем сложность"
-          title="Как мы измеряем сложность"
-        >?</button>
-        <div class="meta game-stats" id="game-stats" aria-live="polite"></div>
-      </div>
+      <div class="meta game-stats" id="game-stats" aria-live="polite"></div>
       <div class="meta" id="level-meta"></div>
       <div class="rows" id="rows" aria-label="Выбор строки или клавиши 1–8"></div>
     </div>
@@ -774,13 +821,23 @@
     </div>
   </div>
 
+  <a
+    href="book.html"
+    id="book-fab"
+    aria-label="Книга"
+    title="Книга"
+  >
+    <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true" focusable="false">
+      <path fill="currentColor" d="M4 17V10h3v7H4zm5 0V6h3v11H9zm5 0v-5h3v5h-3zm5 0V8h3v9h-3z"/>
+    </svg>
+  </a>
+
   <button
     type="button"
     id="series-fab"
     aria-label="Список серий"
     title="Серии (слова и картинки)"
     hidden
-    style="position:fixed;top:12px;right:134px;z-index:2147483647"
   >
     <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true" focusable="false">
       <path fill="currentColor" d="M3 5.5h16v1.7H3zm0 4.65h16v1.7H3zm0 4.65h12v1.7H3z"/>
@@ -792,7 +849,6 @@
     id="info-fab"
     aria-label="Подвести итог"
     title="Подвести итог"
-    style="position:fixed;top:12px;right:76px;z-index:2147483647"
   >!</button>
 
   <button
@@ -801,7 +857,6 @@
     class="help-fab js-open-briefing"
     aria-label="Как мы измеряем сложность"
     title="Как мы измеряем сложность"
-    style="position:fixed;top:12px;right:16px;z-index:2147483647"
   >?</button>
 
   <script src="game-data.js?v=1778730021"></script>
@@ -828,6 +883,16 @@
       const currentWrap = document.getElementById("current-wrap");
       const stageTextCard = document.getElementById("stage-text-card");
       const feedback = document.getElementById("feedback");
+      function gameUiNarrow() {
+        try {
+          return window.matchMedia("(max-width: 400px)").matches;
+        } catch (e) {
+          return false;
+        }
+      }
+      function setFeedbackMsg(wideText, narrowText) {
+        feedback.textContent = gameUiNarrow() ? narrowText : wideText;
+      }
       const overlay = document.getElementById("overlay");
       const gameModal = document.getElementById("game-modal");
       const modalTitle = document.getElementById("modal-title");
@@ -1119,9 +1184,21 @@
       }
 
       function updateGameStats() {
-        gameStats.textContent =
+        const full =
           "Заданий: " + tasksDone + " · Ошибок: " + mistakeCount;
+        const short =
+          "Зад.: " + tasksDone + " · Ош.: " + mistakeCount;
+        gameStats.textContent = gameUiNarrow() ? short : full;
+        gameStats.title = full;
       }
+
+      var gameStatsResizeT = null;
+      window.addEventListener("resize", function () {
+        window.clearTimeout(gameStatsResizeT);
+        gameStatsResizeT = window.setTimeout(function () {
+          updateGameStats();
+        }, 120);
+      });
 
       function resetSessionStats() {
         tasksDone = 0;
@@ -1463,8 +1540,9 @@
         current = queue[0] || null;
         hideStageTextCard();
         currentImg.classList.remove("stage-txt");
-        levelMeta.textContent =
-          "Набор: " + lv.id + " · картинок: " + lv.images.length;
+        const lm = "Набор: " + lv.id + " · картинок: " + lv.images.length;
+        levelMeta.textContent = lm;
+        levelMeta.title = lm;
         showCurrent();
       }
 

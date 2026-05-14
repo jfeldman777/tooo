@@ -2,6 +2,9 @@
 $ErrorActionPreference = "Stop"
 $root = $PSScriptRoot
 & "$root\build-game-data.ps1"
+if (Test-Path -LiteralPath (Join-Path $root "build-book-manifest.ps1")) {
+    & "$root\build-book-manifest.ps1"
+}
 $entryPage = Join-Path $root "index.html"
 
 function Open-HtmlInBrowser([string]$htmlPath) {

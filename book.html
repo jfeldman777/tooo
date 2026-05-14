@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" sizes="any" />
+  <title>Книга</title>
+  <style>
+    :root {
+      --bg: #0f1114;
+      --panel: #1a1d23;
+      --border: #2e3340;
+      --text: #e8eaf0;
+      --muted: #8b929e;
+      --accent: #5b8cde;
+      /* высота нижней панели + safe area (один раз) */
+      --nav-h: calc(64px + env(safe-area-inset-bottom, 0px));
+      --edit-bar-h: 40px;
+    }
+    @media (min-width: 420px) {
+      :root {
+        --nav-h: calc(36px + env(safe-area-inset-bottom, 0px));
+      }
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, Segoe UI, sans-serif;
+    }
+    #app {
+      min-height: 100dvh;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: max(6px, env(safe-area-inset-top, 0px))
+        max(10px, env(safe-area-inset-right, 0px))
+        calc(var(--nav-h) + 4px)
+        max(10px, env(safe-area-inset-left, 0px));
+    }
+    #app.edit-tools-pad {
+      padding-top: calc(max(4px, env(safe-area-inset-top, 0px)) + var(--edit-bar-h));
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: 1.05rem;
+      font-weight: 700;
+      text-align: center;
+    }
+    #toc-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    #toc-list li {
+      margin-bottom: 6px;
+    }
+    .toc-item {
+      display: flex;
+      align-items: stretch;
+      gap: 6px;
+    }
+    .toc-item .toc-main {
+      flex: 1 1 auto;
+      min-width: 0;
+      width: auto;
+      text-align: left;
+      padding: 10px 12px;
+      font-size: 0.92rem;
+      font-family: inherit;
+      color: var(--text);
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      cursor: pointer;
+    }
+    .toc-item .toc-main:active {
+      transform: scale(0.99);
+    }
+    .toc-item .toc-pen {
+      flex: 0 0 40px;
+      width: 40px;
+      min-height: 40px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+      border: 2px solid var(--border);
+      background: var(--panel);
+      color: var(--text);
+      cursor: pointer;
+    }
+    .toc-item .toc-pen:hover {
+      border-color: var(--accent);
+      color: #fff;
+    }
+    #toc-list button {
+      font-family: inherit;
+    }
+    #page-wrap {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+    }
+    #page-body {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+    }
+    #page-body.page-body--center {
+      justify-content: center;
+    }
+    #page-text {
+      width: 100%;
+      max-width: 36rem;
+      margin: 0 auto;
+      padding: 8px 4px 16px;
+      font-size: clamp(1rem, 3.8vw, 1.15rem);
+      line-height: 1.55;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    #page-text-edit {
+      width: 100%;
+      max-width: 36rem;
+      min-height: min(48vh, 280px);
+      margin: 0 auto;
+      padding: 12px;
+      font-size: clamp(1rem, 3.8vw, 1.15rem);
+      line-height: 1.55;
+      font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+      color: var(--text);
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      resize: vertical;
+    }
+    #edit-toolbar {
+      position: fixed;
+      top: max(2px, env(safe-area-inset-top, 0px));
+      right: max(6px, env(safe-area-inset-right, 0px));
+      z-index: 110;
+      display: flex;
+      gap: 4px;
+    }
+    #edit-toolbar button {
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      background: var(--panel);
+      color: var(--text);
+      cursor: pointer;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+    }
+    #edit-toolbar button:hover {
+      border-color: var(--accent);
+      color: #fff;
+    }
+    #edit-toolbar button:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+    #edit-toolbar button svg {
+      display: block;
+    }
+    #edit-toolbar button.is-active {
+      border-color: var(--accent);
+      background: rgba(91, 140, 222, 0.22);
+      color: #fff;
+    }
+    #edit-toolbar #btn-save[hidden] {
+      display: none !important;
+    }
+    #page-img {
+      display: block;
+      max-width: 100%;
+      width: auto;
+      height: auto;
+      max-height: min(78dvh, 680px);
+      object-fit: contain;
+      border-radius: 10px;
+      background: #0a0c0f;
+    }
+    #page-label {
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin-bottom: 4px;
+      text-align: center;
+      line-height: 1.25;
+    }
+    #err {
+      color: #f48a8a;
+      text-align: center;
+      padding: 16px;
+      font-size: 0.95rem;
+    }
+    .nav {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 100;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3px;
+      padding: 3px max(6px, env(safe-area-inset-left, 0px))
+        max(2px, env(safe-area-inset-bottom, 0px))
+        max(6px, env(safe-area-inset-right, 0px));
+      background: linear-gradient(180deg, transparent 0%, rgba(15, 17, 20, 0.92) 22%);
+      border-top: 1px solid var(--border);
+    }
+    @media (min-width: 420px) {
+      .nav {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+    .nav button {
+      min-height: 28px;
+      padding: 1px 2px;
+      font-size: 0.58rem;
+      font-weight: 600;
+      font-family: inherit;
+      line-height: 1.12;
+      letter-spacing: -0.03em;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      color: var(--text);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      overflow: hidden;
+      hyphens: none;
+    }
+    @media (min-width: 420px) {
+      .nav button {
+        font-size: 0.68rem;
+        min-height: 30px;
+        padding: 2px 4px;
+        letter-spacing: 0;
+      }
+    }
+    .nav button:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+    .nav button:not(:disabled):active { transform: scale(0.98); }
+    .nav .nav-primary {
+      background: var(--accent);
+      color: #fff;
+      border-color: transparent;
+    }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+  <div id="edit-toolbar" hidden aria-label="Редактирование (только локальный сервер)">
+    <button type="button" id="btn-edit" aria-label="Редактировать" title="Редактировать">
+      <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path fill="currentColor" d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+      </svg>
+    </button>
+    <button type="button" id="btn-save" aria-label="Сохранить" title="Сохранить">
+      <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path fill="currentColor" d="M17 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7l-4-4zm-5 16a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm3-10H5V5h10v4z"/>
+      </svg>
+    </button>
+  </div>
+  <div id="app">
+    <div id="view-toc" hidden>
+      <h1>Оглавление</h1>
+      <ul id="toc-list"></ul>
+    </div>
+    <div id="view-page" hidden>
+      <div id="page-wrap">
+        <div id="page-label"></div>
+        <div id="page-body">
+          <pre id="page-text" hidden></pre>
+          <textarea id="page-text-edit" hidden spellcheck="true" rows="12"></textarea>
+          <img id="page-img" alt="" hidden decoding="async" />
+        </div>
+      </div>
+    </div>
+    <p id="err" hidden></p>
+  </div>
+  <nav class="nav" aria-label="Навигация по книге">
+    <button type="button" id="btn-back" title="Назад">Назад</button>
+    <button type="button" id="btn-fwd" title="Вперёд" aria-label="Вперёд">Далее</button>
+    <button type="button" id="btn-toc" title="К оглавлению" aria-label="К оглавлению">Меню</button>
+    <button type="button" class="nav-primary" id="btn-game" title="К игре" aria-label="К игре">Игра</button>
+  </nav>
+  <script>
+    (function () {
+      "use strict";
+      var BOOK_PREFIX = "book/";
+      var manifest = null;
+      var pageIndex = -1;
+      var editMode = false;
+      var pendingOpenEdit = false;
+      var viewToc = document.getElementById("view-toc");
+      var viewPage = document.getElementById("view-page");
+      var appEl = document.getElementById("app");
+      var tocList = document.getElementById("toc-list");
+      var pageLabel = document.getElementById("page-label");
+      var pageBody = document.getElementById("page-body");
+      var pageText = document.getElementById("page-text");
+      var pageTextEdit = document.getElementById("page-text-edit");
+      var pageImg = document.getElementById("page-img");
+      var errEl = document.getElementById("err");
+      var editToolbar = document.getElementById("edit-toolbar");
+      var btnEdit = document.getElementById("btn-edit");
+      var btnSave = document.getElementById("btn-save");
+      var btnBack = document.getElementById("btn-back");
+      var btnFwd = document.getElementById("btn-fwd");
+      var btnToc = document.getElementById("btn-toc");
+      var btnGame = document.getElementById("btn-game");
+
+      function isLocalServer() {
+        var h = String(location.hostname || "").toLowerCase();
+        return h === "localhost" || h === "127.0.0.1" || h === "[::1]";
+      }
+
+      function enterEditMode() {
+        if (!manifest || pageIndex < 0 || !manifest.pages[pageIndex]) return;
+        if (manifest.pages[pageIndex].kind !== "text") return;
+        editMode = true;
+        pageTextEdit.value = pageText.textContent.replace(/\u00a0/g, "");
+        pageText.hidden = true;
+        pageTextEdit.hidden = false;
+        pageBody.classList.remove("page-body--center");
+        btnEdit.classList.add("is-active");
+        pageTextEdit.focus();
+      }
+
+      function exitEditMode(syncToPre) {
+        if (syncToPre && editMode) {
+          pageText.textContent = pageTextEdit.value.length ? pageTextEdit.value : "\u00a0";
+        }
+        editMode = false;
+        pageTextEdit.hidden = true;
+        btnEdit.classList.remove("is-active");
+      }
+
+      function updateEditToolbar() {
+        if (!isLocalServer()) {
+          editToolbar.hidden = true;
+          appEl.classList.remove("edit-tools-pad");
+          btnSave.hidden = false;
+          return;
+        }
+        if (!errEl.hidden || (viewToc.hidden && viewPage.hidden)) {
+          editToolbar.hidden = true;
+          appEl.classList.remove("edit-tools-pad");
+          btnSave.hidden = false;
+          return;
+        }
+        if (!viewToc.hidden) {
+          editToolbar.hidden = false;
+          appEl.classList.add("edit-tools-pad");
+          btnSave.hidden = true;
+          btnEdit.hidden = false;
+          var ti = -1;
+          for (var hi = 0; hi < manifest.pages.length; hi++) {
+            if (manifest.pages[hi].kind === "text") {
+              ti = hi;
+              break;
+            }
+          }
+          btnEdit.disabled = ti < 0;
+          btnEdit.title =
+            ti >= 0
+              ? "Открыть первую текстовую страницу для правки"
+              : "Нет текстовых страниц";
+          btnEdit.classList.remove("is-active");
+          return;
+        }
+        if (viewPage.hidden || pageIndex < 0 || !manifest.pages[pageIndex]) {
+          editToolbar.hidden = true;
+          appEl.classList.remove("edit-tools-pad");
+          btnSave.hidden = false;
+          return;
+        }
+        var p = manifest.pages[pageIndex];
+        if (p.kind !== "text") {
+          exitEditMode(false);
+          editToolbar.hidden = true;
+          appEl.classList.remove("edit-tools-pad");
+          btnSave.hidden = false;
+          return;
+        }
+        editToolbar.hidden = false;
+        appEl.classList.add("edit-tools-pad");
+        btnSave.hidden = false;
+        btnEdit.hidden = false;
+        btnEdit.disabled = false;
+        btnEdit.title = "Редактировать";
+        if (!editMode) {
+          pageText.hidden = false;
+          pageTextEdit.hidden = true;
+        }
+      }
+
+      function fallbackDownload(filename, blob) {
+        var a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = filename;
+        a.rel = "noopener";
+        document.body.appendChild(a);
+        a.click();
+        URL.revokeObjectURL(a.href);
+        a.remove();
+      }
+
+      function saveTextToDisk(filename, text) {
+        var blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+        if (typeof window.showSaveFilePicker === "function") {
+          return window
+            .showSaveFilePicker({
+              suggestedName: filename,
+              types: [
+                {
+                  description: "Текст",
+                  accept: { "text/plain": [".txt"] }
+                }
+              ]
+            })
+            .then(function (handle) {
+              return handle.createWritable().then(function (w) {
+                return w.write(blob).then(function () {
+                  return w.close();
+                });
+              });
+            })
+            .catch(function (e) {
+              if (e && e.name === "AbortError") {
+                return Promise.reject(e);
+              }
+              fallbackDownload(filename, blob);
+            });
+        }
+        fallbackDownload(filename, blob);
+        return Promise.resolve();
+      }
+
+      function flashSaved() {
+        var prev = pageLabel.textContent;
+        pageLabel.textContent = prev + " — сохранено";
+        window.setTimeout(function () {
+          pageLabel.textContent = prev;
+        }, 1600);
+      }
+
+      function showErr(msg) {
+        errEl.textContent = msg;
+        errEl.hidden = false;
+        viewToc.hidden = true;
+        viewPage.hidden = true;
+        exitEditMode(false);
+        updateEditToolbar();
+      }
+
+      function setNavState() {
+        var n = manifest && manifest.pages ? manifest.pages.length : 0;
+        var onToc = pageIndex < 0;
+        btnToc.disabled = onToc;
+        btnBack.disabled = onToc || pageIndex <= 0;
+        btnFwd.disabled = n === 0 || (pageIndex >= 0 && pageIndex >= n - 1);
+      }
+
+      function showToc() {
+        exitEditMode(true);
+        pageIndex = -1;
+        viewToc.hidden = false;
+        viewPage.hidden = true;
+        errEl.hidden = true;
+        pageText.textContent = "";
+        pageText.hidden = true;
+        pageTextEdit.value = "";
+        pageImg.hidden = true;
+        pageImg.removeAttribute("src");
+        setNavState();
+        updateEditToolbar();
+      }
+
+      function renderPage() {
+        var pages = manifest.pages;
+        if (pageIndex < 0 || pageIndex >= pages.length) {
+          showToc();
+          return;
+        }
+        var openAfter = pendingOpenEdit;
+        pendingOpenEdit = false;
+        exitEditMode(true);
+        var p = pages[pageIndex];
+        viewToc.hidden = true;
+        viewPage.hidden = false;
+        errEl.hidden = true;
+        pageLabel.textContent = "Стр. " + (pageIndex + 1) + " · " + p.file;
+
+        if (p.kind === "text") {
+          pageImg.hidden = true;
+          pageImg.removeAttribute("src");
+          pageText.hidden = false;
+          pageBody.classList.add("page-body--center");
+          fetch(BOOK_PREFIX + p.file, { cache: "no-store" })
+            .then(function (r) {
+              if (!r.ok) throw new Error(r.status);
+              return r.text();
+            })
+            .then(function (t) {
+              pageText.textContent = t || "\u00a0";
+            })
+            .catch(function () {
+              pageText.textContent = "(не удалось загрузить текст)";
+            })
+            .then(function () {
+              if (openAfter) {
+                enterEditMode();
+              }
+              setNavState();
+              updateEditToolbar();
+            });
+        } else {
+          pageText.hidden = true;
+          pageText.textContent = "";
+          pageTextEdit.value = "";
+          pageBody.classList.remove("page-body--center");
+          pageImg.hidden = false;
+          pageImg.src = BOOK_PREFIX + p.file;
+          pageImg.alt = p.file;
+          setNavState();
+          updateEditToolbar();
+        }
+      }
+
+      function buildToc() {
+        var penSvg =
+          '<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>';
+        tocList.textContent = "";
+        manifest.pages.forEach(function (p, i) {
+          var li = document.createElement("li");
+          li.className = "toc-item";
+          var b = document.createElement("button");
+          b.type = "button";
+          b.className = "toc-main";
+          b.textContent = (i + 1) + ". " + p.file + (p.kind === "image" ? " (картинка)" : "");
+          b.addEventListener("click", function () {
+            pendingOpenEdit = false;
+            pageIndex = i;
+            renderPage();
+          });
+          li.appendChild(b);
+          if (isLocalServer() && p.kind === "text") {
+            var pen = document.createElement("button");
+            pen.type = "button";
+            pen.className = "toc-pen";
+            pen.setAttribute("aria-label", "Редактировать «" + p.file + "»");
+            pen.setAttribute("title", "Редактировать эту страницу");
+            pen.innerHTML = penSvg;
+            pen.addEventListener("click", function (ev) {
+              ev.preventDefault();
+              ev.stopPropagation();
+              pageIndex = i;
+              pendingOpenEdit = true;
+              renderPage();
+            });
+            li.appendChild(pen);
+          }
+          tocList.appendChild(li);
+        });
+      }
+
+      btnEdit.addEventListener("click", function () {
+        if (!isLocalServer()) return;
+        if (!viewToc.hidden) {
+          var ti = -1;
+          for (var hi = 0; hi < manifest.pages.length; hi++) {
+            if (manifest.pages[hi].kind === "text") {
+              ti = hi;
+              break;
+            }
+          }
+          if (ti < 0) return;
+          pageIndex = ti;
+          pendingOpenEdit = true;
+          renderPage();
+          return;
+        }
+        if (pageIndex < 0 || !manifest.pages[pageIndex] || manifest.pages[pageIndex].kind !== "text") {
+          return;
+        }
+        if (!editMode) {
+          enterEditMode();
+        } else {
+          editMode = false;
+          pageText.textContent = pageTextEdit.value.length ? pageTextEdit.value : "\u00a0";
+          pageTextEdit.hidden = true;
+          pageText.hidden = false;
+          pageBody.classList.add("page-body--center");
+          btnEdit.classList.remove("is-active");
+        }
+      });
+
+      btnSave.addEventListener("click", function () {
+        if (!isLocalServer() || pageIndex < 0 || !manifest.pages[pageIndex] || manifest.pages[pageIndex].kind !== "text") {
+          return;
+        }
+        if (editMode) {
+          pageText.textContent = pageTextEdit.value.length ? pageTextEdit.value : "\u00a0";
+        }
+        var file = manifest.pages[pageIndex].file;
+        var body = pageText.textContent.replace(/\u00a0/g, "");
+        saveTextToDisk(file, body).then(
+          function () {
+            flashSaved();
+          },
+          function () {}
+        );
+      });
+
+      btnBack.addEventListener("click", function () {
+        if (pageIndex > 0) {
+          pageIndex--;
+          renderPage();
+        }
+      });
+      btnFwd.addEventListener("click", function () {
+        if (pageIndex < 0) {
+          if (manifest.pages.length) {
+            pageIndex = 0;
+            renderPage();
+          }
+          return;
+        }
+        if (pageIndex < manifest.pages.length - 1) {
+          pageIndex++;
+          renderPage();
+        }
+      });
+      btnToc.addEventListener("click", function () {
+        showToc();
+      });
+      btnGame.addEventListener("click", function () {
+        window.location.href = "game.html";
+      });
+
+      fetch("book/book-manifest.json", { cache: "no-store" })
+        .then(function (r) {
+          if (!r.ok) throw new Error("manifest " + r.status);
+          return r.json();
+        })
+        .then(function (data) {
+          if (!data || !Array.isArray(data.pages) || data.pages.length === 0) {
+            throw new Error("empty book");
+          }
+          manifest = data;
+          buildToc();
+          showToc();
+          setNavState();
+        })
+        .catch(function () {
+          showErr("Не найден book/book-manifest.json или книга пуста. Запустите build-book-manifest.ps1.");
+          btnBack.disabled = true;
+          btnFwd.disabled = true;
+          btnToc.disabled = true;
+        });
+    })();
+  </script>
+</body>
+</html>
