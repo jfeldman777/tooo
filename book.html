@@ -50,6 +50,14 @@
       font-weight: 700;
       text-align: center;
     }
+    .toc-hint {
+      margin: -4px 0 10px;
+      padding: 0 10px;
+      font-size: 0.72rem;
+      line-height: 1.35;
+      color: var(--muted);
+      text-align: center;
+    }
     #toc-list {
       list-style: none;
       margin: 0;
@@ -98,7 +106,22 @@
       color: var(--text);
       cursor: pointer;
     }
-    .toc-item .toc-pen:hover {
+    .toc-item .toc-t {
+      flex: 0 0 40px;
+      width: 40px;
+      min-height: 40px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+      border: 2px solid var(--border);
+      background: var(--panel);
+      color: var(--text);
+      cursor: pointer;
+    }
+    .toc-item .toc-pen:hover,
+    .toc-item .toc-t:hover {
       border-color: var(--accent);
       color: #fff;
     }
@@ -156,6 +179,9 @@
       right: max(6px, env(safe-area-inset-right, 0px));
       z-index: 110;
       display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      max-width: min(280px, 58vw);
       gap: 4px;
     }
     #edit-toolbar button {
@@ -183,13 +209,37 @@
     #edit-toolbar button svg {
       display: block;
     }
-    #edit-toolbar button.is-active {
-      border-color: var(--accent);
-      background: rgba(91, 140, 222, 0.22);
-      color: #fff;
+    #btn-pick-image {
+      width: 44px;
+      height: 44px;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      color: var(--text);
+      cursor: pointer;
+      font-family: inherit;
     }
-    #edit-toolbar #btn-save[hidden] {
-      display: none !important;
+    #btn-pick-image svg {
+      display: block;
+    }
+    #page-img-foot {
+      max-width: 36rem;
+      margin: 12px auto 0;
+      text-align: center;
+    }
+    .page-img-missing {
+      margin: 0 0 10px;
+      font-size: 0.88rem;
+      line-height: 1.45;
+      color: var(--muted);
+    }
+    #btn-pick-image:hover {
+      border-color: var(--accent);
+      color: #fff;
     }
     #page-img {
       display: block;
@@ -254,6 +304,10 @@
       overflow: hidden;
       hyphens: none;
     }
+    .nav button svg {
+      display: block;
+      flex-shrink: 0;
+    }
     @media (min-width: 420px) {
       .nav button {
         font-size: 0.68rem;
@@ -273,6 +327,80 @@
       border-color: transparent;
     }
     [hidden] { display: none !important; }
+    .title-dialog {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .title-dialog[hidden] {
+      display: none !important;
+    }
+    .title-dialog-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.55);
+    }
+    .title-dialog-panel {
+      position: relative;
+      width: min(100%, 22rem);
+      padding: 16px 18px 14px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+    }
+    .title-dialog-heading {
+      margin: 0 0 6px;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .title-dialog-sub {
+      margin: 0 0 10px;
+      font-size: 0.72rem;
+      color: var(--muted);
+      word-break: break-all;
+    }
+    .title-dialog-input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px 12px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      color: var(--text);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 12px;
+    }
+    .title-dialog-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+    .title-dialog-btn {
+      font-family: inherit;
+      font-size: 0.88rem;
+      padding: 8px 14px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      cursor: pointer;
+    }
+    .title-dialog-btn--primary {
+      background: var(--accent);
+      border-color: transparent;
+      color: #fff;
+    }
+    .title-dialog-btn:hover {
+      filter: brightness(1.08);
+    }
   </style>
 </head>
 <body>
@@ -287,10 +415,21 @@
         <path fill="currentColor" d="M17 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7l-4-4zm-5 16a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm3-10H5V5h10v4z"/>
       </svg>
     </button>
+    <button type="button" id="btn-new-txt" hidden aria-label="Новая текстовая страница" title="Новая текстовая страница — пустое поле">
+      <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path fill="currentColor" d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm4 18H6V4h7v5h5v11zM8 12h8v2H8v-2zm0 4h5v2H8v-2z"/>
+      </svg>
+    </button>
+    <button type="button" id="btn-new-img" hidden aria-label="Новая картинка PNG" title="Выбрать PNG с компьютера">
+      <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path fill="currentColor" d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5zM9.5 8a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3z"/>
+      </svg>
+    </button>
   </div>
   <div id="app">
     <div id="view-toc" hidden>
       <h1>Оглавление</h1>
+      <p id="toc-title-hint" class="toc-hint" hidden>В каждой строке кнопка с «T» — титул для оглавления (файл <code>book/book-titles.json</code>).</p>
       <ul id="toc-list"></ul>
     </div>
     <div id="view-page" hidden>
@@ -300,22 +439,53 @@
           <pre id="page-text" hidden></pre>
           <textarea id="page-text-edit" hidden spellcheck="true" rows="12"></textarea>
           <img id="page-img" alt="" hidden decoding="async" />
+          <div id="page-img-foot" hidden>
+            <p id="page-img-missing" class="page-img-missing"></p>
+            <button type="button" id="btn-pick-image" hidden aria-label="Выбрать PNG" title="Выбрать PNG">
+              <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path fill="currentColor" d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z"/>
+              </svg>
+            </button>
+            <input type="file" id="input-image-file" accept="image/png,.png" hidden />
+          </div>
         </div>
       </div>
     </div>
     <p id="err" hidden></p>
   </div>
+  <div id="title-dialog" class="title-dialog" hidden aria-modal="true" role="dialog" aria-labelledby="title-dialog-h">
+    <div class="title-dialog-backdrop" id="title-dialog-backdrop"></div>
+    <div class="title-dialog-panel">
+      <h2 id="title-dialog-h" class="title-dialog-heading">Титул страницы</h2>
+      <p class="title-dialog-sub" id="title-dialog-filename"></p>
+      <input type="text" id="title-dialog-input" class="title-dialog-input" maxlength="240" autocomplete="off" />
+      <div class="title-dialog-actions">
+        <button type="button" class="title-dialog-btn title-dialog-btn--primary" id="title-dialog-save">Сохранить</button>
+        <button type="button" class="title-dialog-btn" id="title-dialog-cancel">Отмена</button>
+      </div>
+    </div>
+  </div>
   <nav class="nav" aria-label="Навигация по книге">
-    <button type="button" id="btn-back" title="Назад">Назад</button>
-    <button type="button" id="btn-fwd" title="Вперёд" aria-label="Вперёд">Далее</button>
-    <button type="button" id="btn-toc" title="К оглавлению" aria-label="К оглавлению">Меню</button>
-    <button type="button" class="nav-primary" id="btn-game" title="К игре" aria-label="К игре">Игра</button>
+    <button type="button" id="btn-back" title="Назад" aria-label="Назад">
+      <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+    </button>
+    <button type="button" id="btn-fwd" title="Вперёд" aria-label="Вперёд">
+      <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8-8-8z"/></svg>
+    </button>
+    <button type="button" id="btn-toc" title="К оглавлению" aria-label="К оглавлению">
+      <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M3 6h18v2H3V6zm0 5h18v2H3v-2zm0 5h18v2H3v-2z"/></svg>
+    </button>
+    <button type="button" class="nav-primary" id="btn-game" title="К игре" aria-label="К игре">
+      <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M8 5v14l11-7-11-7z"/></svg>
+    </button>
   </nav>
   <script>
     (function () {
       "use strict";
       var BOOK_PREFIX = "book/";
+      var TITLES_JSON = "book/book-titles.json";
       var manifest = null;
+      var titlesByFile = {};
       var pageIndex = -1;
       var editMode = false;
       var pendingOpenEdit = false;
@@ -323,6 +493,7 @@
       var viewPage = document.getElementById("view-page");
       var appEl = document.getElementById("app");
       var tocList = document.getElementById("toc-list");
+      var tocTitleHint = document.getElementById("toc-title-hint");
       var pageLabel = document.getElementById("page-label");
       var pageBody = document.getElementById("page-body");
       var pageText = document.getElementById("page-text");
@@ -336,6 +507,156 @@
       var btnFwd = document.getElementById("btn-fwd");
       var btnToc = document.getElementById("btn-toc");
       var btnGame = document.getElementById("btn-game");
+      var btnNewTxt = document.getElementById("btn-new-txt");
+      var btnNewImg = document.getElementById("btn-new-img");
+      var pageImgFoot = document.getElementById("page-img-foot");
+      var pageImgMissing = document.getElementById("page-img-missing");
+      var btnPickImage = document.getElementById("btn-pick-image");
+      var inputImageFile = document.getElementById("input-image-file");
+      var titleDialog = document.getElementById("title-dialog");
+      var titleDialogBackdrop = document.getElementById("title-dialog-backdrop");
+      var titleDialogFilename = document.getElementById("title-dialog-filename");
+      var titleDialogInput = document.getElementById("title-dialog-input");
+      var titleDialogSave = document.getElementById("title-dialog-save");
+      var titleDialogCancel = document.getElementById("title-dialog-cancel");
+      var tocPngPickActive = false;
+      var tocPickerTimer = null;
+      var imageSrcNonce = 0;
+      var titleEditIndex = -1;
+
+      function isAllowedPng(file) {
+        if (!file) return false;
+        if (file.type === "image/png") return true;
+        if (file.type && file.type !== "") return false;
+        return /\.png$/i.test(String(file.name || ""));
+      }
+
+      function tocPickerFocusHandler() {
+        window.removeEventListener("focus", tocPickerFocusHandler, true);
+        if (tocPickerTimer) window.clearTimeout(tocPickerTimer);
+        tocPickerTimer = window.setTimeout(function () {
+          tocPickerTimer = null;
+          if (
+            tocPngPickActive &&
+            inputImageFile &&
+            (!inputImageFile.files || !inputImageFile.files.length)
+          ) {
+            tocPngPickActive = false;
+          }
+        }, 650);
+      }
+
+      function openNewPngFromToc() {
+        if (!isLocalServer() || !manifest || !inputImageFile) return;
+        window.removeEventListener("focus", tocPickerFocusHandler, true);
+        if (tocPickerTimer) {
+          window.clearTimeout(tocPickerTimer);
+          tocPickerTimer = null;
+        }
+        inputImageFile.removeAttribute("data-replace-index");
+        inputImageFile.accept = "image/png,.png";
+        inputImageFile.value = "";
+        tocPngPickActive = true;
+        window.addEventListener("focus", tocPickerFocusHandler, true);
+        inputImageFile.click();
+      }
+
+      function startReplaceImage(index) {
+        if (!isLocalServer() || !manifest || !inputImageFile) return;
+        if (index < 0 || !manifest.pages[index] || manifest.pages[index].kind !== "image") return;
+        window.removeEventListener("focus", tocPickerFocusHandler, true);
+        if (tocPickerTimer) {
+          window.clearTimeout(tocPickerTimer);
+          tocPickerTimer = null;
+        }
+        tocPngPickActive = false;
+        inputImageFile.setAttribute("data-replace-index", String(index));
+        inputImageFile.accept = "image/png,.png";
+        inputImageFile.value = "";
+        inputImageFile.click();
+      }
+
+      function hideNewPageButtons() {
+        if (btnNewTxt) btnNewTxt.hidden = true;
+        if (btnNewImg) btnNewImg.hidden = true;
+      }
+
+      function leadingNumFromFile(file) {
+        var m = /^(\d+)\./.exec(String(file || ""));
+        return m ? m[1] : "";
+      }
+
+      function getPageTitle(file) {
+        var v = titlesByFile[String(file || "")];
+        if (v == null) return "";
+        return String(v);
+      }
+
+      function mergeTitlesFromJson(tdata) {
+        titlesByFile = {};
+        if (tdata && tdata.byFile && typeof tdata.byFile === "object") {
+          Object.keys(tdata.byFile).forEach(function (k) {
+            titlesByFile[k] = tdata.byFile[k] == null ? "" : String(tdata.byFile[k]);
+          });
+        }
+      }
+
+      function formatTocLine(i, p) {
+        var n = i + 1;
+        var title = getPageTitle(p.file).trim();
+        if (title) return n + ". " + title;
+        var d = leadingNumFromFile(p.file);
+        return d ? n + ". №" + d : n + ".";
+      }
+
+      function formatPageLabel(idx, p) {
+        var t = getPageTitle(p.file).trim();
+        var tail = t || ("№" + (leadingNumFromFile(p.file) || "?"));
+        return "Стр. " + (idx + 1) + " · " + tail;
+      }
+
+      function collectTitlesPayload() {
+        var o = { byFile: {} };
+        if (!manifest || !manifest.pages) return o;
+        manifest.pages.forEach(function (pg) {
+          var v = titlesByFile[pg.file];
+          o.byFile[pg.file] = v == null ? "" : String(v);
+        });
+        return o;
+      }
+
+      function refreshPageLabel() {
+        if (pageIndex < 0 || !manifest || !manifest.pages[pageIndex]) return;
+        pageLabel.textContent = formatPageLabel(pageIndex, manifest.pages[pageIndex]);
+      }
+
+      function showNewPageButtons() {
+        if (btnNewTxt) btnNewTxt.hidden = false;
+        if (btnNewImg) btnNewImg.hidden = false;
+      }
+
+      function maxLeadingPageNum() {
+        var maxN = 0;
+        if (!manifest || !manifest.pages) return 0;
+        manifest.pages.forEach(function (p) {
+          var m = /^(\d+)\./.exec(String(p.file || ""));
+          if (m) {
+            var n = parseInt(m[1], 10);
+            if (!isNaN(n)) maxN = Math.max(maxN, n);
+          }
+        });
+        return maxN;
+      }
+
+      function addNewTextPage() {
+        if (!isLocalServer() || !manifest) return;
+        var n = maxLeadingPageNum() + 1;
+        manifest.pages.push({ file: n + ".txt", kind: "text", _newPage: true });
+        buildToc();
+        pageIndex = manifest.pages.length - 1;
+        pendingOpenEdit = true;
+        renderPage();
+      }
 
       function isLocalServer() {
         var h = String(location.hostname || "").toLowerCase();
@@ -365,12 +686,16 @@
 
       function updateEditToolbar() {
         if (!isLocalServer()) {
+          hideNewPageButtons();
+          if (tocTitleHint) tocTitleHint.hidden = true;
           editToolbar.hidden = true;
           appEl.classList.remove("edit-tools-pad");
           btnSave.hidden = false;
           return;
         }
         if (!errEl.hidden || (viewToc.hidden && viewPage.hidden)) {
+          hideNewPageButtons();
+          if (tocTitleHint) tocTitleHint.hidden = true;
           editToolbar.hidden = true;
           appEl.classList.remove("edit-tools-pad");
           btnSave.hidden = false;
@@ -380,6 +705,8 @@
           editToolbar.hidden = false;
           appEl.classList.add("edit-tools-pad");
           btnSave.hidden = true;
+          if (tocTitleHint) tocTitleHint.hidden = false;
+          showNewPageButtons();
           btnEdit.hidden = false;
           var ti = -1;
           for (var hi = 0; hi < manifest.pages.length; hi++) {
@@ -397,19 +724,39 @@
           return;
         }
         if (viewPage.hidden || pageIndex < 0 || !manifest.pages[pageIndex]) {
+          hideNewPageButtons();
+          if (tocTitleHint) tocTitleHint.hidden = true;
           editToolbar.hidden = true;
           appEl.classList.remove("edit-tools-pad");
           btnSave.hidden = false;
           return;
         }
         var p = manifest.pages[pageIndex];
+        if (p.kind === "image") {
+          hideNewPageButtons();
+          exitEditMode(false);
+          if (tocTitleHint) tocTitleHint.hidden = true;
+          editToolbar.hidden = false;
+          appEl.classList.add("edit-tools-pad");
+          btnSave.hidden = true;
+          btnEdit.hidden = false;
+          btnEdit.disabled = false;
+          btnEdit.title = "Заменить картинку (PNG с компьютера)";
+          btnEdit.setAttribute("aria-label", "Заменить картинку");
+          btnEdit.classList.remove("is-active");
+          return;
+        }
         if (p.kind !== "text") {
+          hideNewPageButtons();
+          if (tocTitleHint) tocTitleHint.hidden = true;
           exitEditMode(false);
           editToolbar.hidden = true;
           appEl.classList.remove("edit-tools-pad");
           btnSave.hidden = false;
           return;
         }
+        hideNewPageButtons();
+        if (tocTitleHint) tocTitleHint.hidden = true;
         editToolbar.hidden = false;
         appEl.classList.add("edit-tools-pad");
         btnSave.hidden = false;
@@ -443,6 +790,68 @@
                 {
                   description: "Текст",
                   accept: { "text/plain": [".txt"] }
+                }
+              ]
+            })
+            .then(function (handle) {
+              return handle.createWritable().then(function (w) {
+                return w.write(blob).then(function () {
+                  return w.close();
+                });
+              });
+            })
+            .catch(function (e) {
+              if (e && e.name === "AbortError") {
+                return Promise.reject(e);
+              }
+              fallbackDownload(filename, blob);
+            });
+        }
+        fallbackDownload(filename, blob);
+        return Promise.resolve();
+      }
+
+      function saveImageToDisk(filename, blob) {
+        if (typeof window.showSaveFilePicker === "function") {
+          return window
+            .showSaveFilePicker({
+              suggestedName: filename,
+              types: [
+                {
+                  description: "PNG",
+                  accept: { "image/png": [".png"] }
+                }
+              ]
+            })
+            .then(function (handle) {
+              return handle.createWritable().then(function (w) {
+                return w.write(blob).then(function () {
+                  return w.close();
+                });
+              });
+            })
+            .catch(function (e) {
+              if (e && e.name === "AbortError") {
+                return Promise.reject(e);
+              }
+              fallbackDownload(filename, blob);
+            });
+        }
+        fallbackDownload(filename, blob);
+        return Promise.resolve();
+      }
+
+      function saveJsonToDisk(filename, obj) {
+        var text = JSON.stringify(obj, null, 2);
+        var blob = new Blob([text], { type: "application/json;charset=utf-8" });
+        if (typeof window.showSaveFilePicker === "function") {
+          return window
+            .showSaveFilePicker({
+              suggestedName: filename,
+              types: [
+                {
+                  description: "JSON",
+                  accept: { "application/json": [".json"] }
                 }
               ]
             })
@@ -517,23 +926,33 @@
         viewToc.hidden = true;
         viewPage.hidden = false;
         errEl.hidden = true;
-        pageLabel.textContent = "Стр. " + (pageIndex + 1) + " · " + p.file;
+        pageLabel.textContent = formatPageLabel(pageIndex, p);
 
         if (p.kind === "text") {
           pageImg.hidden = true;
           pageImg.removeAttribute("src");
+          if (pageImgFoot) pageImgFoot.hidden = true;
+          if (btnPickImage) btnPickImage.hidden = true;
+          if (inputImageFile) inputImageFile.value = "";
           pageText.hidden = false;
           pageBody.classList.add("page-body--center");
           fetch(BOOK_PREFIX + p.file, { cache: "no-store" })
             .then(function (r) {
-              if (!r.ok) throw new Error(r.status);
+              if (!r.ok) {
+                if (p._newPage && r.status === 404) return "";
+                throw new Error(r.status);
+              }
               return r.text();
             })
             .then(function (t) {
-              pageText.textContent = t || "\u00a0";
+              if (p._newPage && (!t || !t.length)) {
+                pageText.textContent = "";
+              } else {
+                pageText.textContent = t && t.length ? t : "\u00a0";
+              }
             })
             .catch(function () {
-              pageText.textContent = "(не удалось загрузить текст)";
+              pageText.textContent = p._newPage ? "" : "(не удалось загрузить текст)";
             })
             .then(function () {
               if (openAfter) {
@@ -547,9 +966,45 @@
           pageText.textContent = "";
           pageTextEdit.value = "";
           pageBody.classList.remove("page-body--center");
+          if (pageImgFoot) pageImgFoot.hidden = true;
+          if (btnPickImage) btnPickImage.hidden = true;
+          if (inputImageFile) inputImageFile.value = "";
+          if (pageImgMissing) pageImgMissing.textContent = "";
+          pageImg.onload = function () {
+            pageImg.onload = null;
+            pageImg.onerror = null;
+            if (pageImgFoot) pageImgFoot.hidden = true;
+            if (btnPickImage) btnPickImage.hidden = true;
+          };
+          pageImg.onerror = function () {
+            pageImg.onerror = null;
+            pageImg.onload = null;
+            if (!pageImgFoot || !pageImgMissing) {
+              setNavState();
+              updateEditToolbar();
+              return;
+            }
+            if (p._newPage && isLocalServer()) {
+              pageImgMissing.textContent =
+                "Файла пока нет. Добавьте «" +
+                BOOK_PREFIX +
+                p.file +
+                "» (только PNG) или нажмите кнопку ниже, выберите PNG и сохраните файл в папку book под именем «" +
+                p.file +
+                "».";
+              pageImgFoot.hidden = false;
+              if (btnPickImage) btnPickImage.hidden = false;
+            } else {
+              pageImgMissing.textContent = "Не удалось загрузить «" + p.file + "».";
+              pageImgFoot.hidden = false;
+              if (btnPickImage) btnPickImage.hidden = true;
+            }
+            setNavState();
+            updateEditToolbar();
+          };
           pageImg.hidden = false;
-          pageImg.src = BOOK_PREFIX + p.file;
-          pageImg.alt = p.file;
+          pageImg.src = BOOK_PREFIX + p.file + "?v=" + String(++imageSrcNonce);
+          pageImg.alt = getPageTitle(p.file).trim() || p.file;
           setNavState();
           updateEditToolbar();
         }
@@ -558,6 +1013,8 @@
       function buildToc() {
         var penSvg =
           '<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>';
+        var titleTsvg =
+          '<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M2.5 16.5V19h2.6L14 9.1l-2.6-2.6L2.5 16.5zm15-12.6l1.4 1.4-1.3 1.3-1.4-1.4 1.3-1.3z"/><text x="11" y="17.5" fill="currentColor" font-size="10" font-weight="800" font-family="system-ui,Segoe UI,sans-serif">T</text></svg>';
         tocList.textContent = "";
         manifest.pages.forEach(function (p, i) {
           var li = document.createElement("li");
@@ -565,18 +1022,36 @@
           var b = document.createElement("button");
           b.type = "button";
           b.className = "toc-main";
-          b.textContent = (i + 1) + ". " + p.file + (p.kind === "image" ? " (картинка)" : "");
+          b.textContent = formatTocLine(i, p);
+          b.setAttribute(
+            "aria-label",
+            "Страница " + (i + 1) + ": " + (getPageTitle(p.file).trim() || "файл " + p.file)
+          );
           b.addEventListener("click", function () {
             pendingOpenEdit = false;
             pageIndex = i;
             renderPage();
           });
           li.appendChild(b);
+          if (isLocalServer()) {
+            var tTit = document.createElement("button");
+            tTit.type = "button";
+            tTit.className = "toc-t";
+            tTit.setAttribute("aria-label", "Титул страницы «" + p.file + "»");
+            tTit.setAttribute("title", "Титул в оглавлении (book-titles.json)");
+            tTit.innerHTML = titleTsvg;
+            tTit.addEventListener("click", function (ev) {
+              ev.preventDefault();
+              ev.stopPropagation();
+              openTitleDialog(i);
+            });
+            li.appendChild(tTit);
+          }
           if (isLocalServer() && p.kind === "text") {
             var pen = document.createElement("button");
             pen.type = "button";
             pen.className = "toc-pen";
-            pen.setAttribute("aria-label", "Редактировать «" + p.file + "»");
+            pen.setAttribute("aria-label", "Редактировать «" + (getPageTitle(p.file).trim() || p.file) + "»");
             pen.setAttribute("title", "Редактировать эту страницу");
             pen.innerHTML = penSvg;
             pen.addEventListener("click", function (ev) {
@@ -587,6 +1062,19 @@
               renderPage();
             });
             li.appendChild(pen);
+          } else if (isLocalServer() && p.kind === "image") {
+            var imgPen = document.createElement("button");
+            imgPen.type = "button";
+            imgPen.className = "toc-pen";
+            imgPen.setAttribute("aria-label", "Заменить картинку «" + (getPageTitle(p.file).trim() || p.file) + "»");
+            imgPen.setAttribute("title", "Заменить картинку (выбрать PNG)");
+            imgPen.innerHTML = penSvg;
+            imgPen.addEventListener("click", function (ev) {
+              ev.preventDefault();
+              ev.stopPropagation();
+              startReplaceImage(i);
+            });
+            li.appendChild(imgPen);
           }
           tocList.appendChild(li);
         });
@@ -608,9 +1096,13 @@
           renderPage();
           return;
         }
-        if (pageIndex < 0 || !manifest.pages[pageIndex] || manifest.pages[pageIndex].kind !== "text") {
+        if (pageIndex < 0 || !manifest.pages[pageIndex]) return;
+        var cur = manifest.pages[pageIndex];
+        if (cur.kind === "image") {
+          startReplaceImage(pageIndex);
           return;
         }
+        if (cur.kind !== "text") return;
         if (!editMode) {
           enterEditMode();
         } else {
@@ -640,6 +1132,112 @@
         );
       });
 
+      if (btnNewTxt) {
+        btnNewTxt.addEventListener("click", function () {
+          addNewTextPage();
+        });
+      }
+      if (btnNewImg) {
+        btnNewImg.addEventListener("click", function () {
+          openNewPngFromToc();
+        });
+      }
+      if (btnPickImage && inputImageFile) {
+        btnPickImage.addEventListener("click", function () {
+          if (!isLocalServer() || pageIndex < 0 || !manifest.pages[pageIndex]) return;
+          var pg = manifest.pages[pageIndex];
+          if (pg.kind !== "image" || !pg._newPage) return;
+          inputImageFile.removeAttribute("data-replace-index");
+          inputImageFile.accept = "image/png,.png";
+          inputImageFile.click();
+        });
+        inputImageFile.addEventListener("change", function () {
+          window.removeEventListener("focus", tocPickerFocusHandler, true);
+          if (tocPickerTimer) {
+            window.clearTimeout(tocPickerTimer);
+            tocPickerTimer = null;
+          }
+          var replaceIdx = -1;
+          if (inputImageFile.hasAttribute("data-replace-index")) {
+            replaceIdx = parseInt(inputImageFile.getAttribute("data-replace-index"), 10);
+            inputImageFile.removeAttribute("data-replace-index");
+          }
+          var picked = inputImageFile.files && inputImageFile.files[0];
+          if (!picked) {
+            if (tocPngPickActive) tocPngPickActive = false;
+            return;
+          }
+          if (!isAllowedPng(picked)) {
+            inputImageFile.value = "";
+            if (tocPngPickActive) tocPngPickActive = false;
+            window.alert("Нужен файл в формате PNG.");
+            return;
+          }
+          if (tocPngPickActive) {
+            tocPngPickActive = false;
+            if (!isLocalServer() || !manifest) {
+              inputImageFile.value = "";
+              return;
+            }
+            var n = maxLeadingPageNum() + 1;
+            var fname = n + ".png";
+            manifest.pages.push({ file: fname, kind: "image", _newPage: true });
+            buildToc();
+            pageIndex = manifest.pages.length - 1;
+            saveImageToDisk(fname, picked).then(
+              function () {
+                inputImageFile.value = "";
+                renderPage();
+              },
+              function () {
+                manifest.pages.pop();
+                buildToc();
+                pageIndex = -1;
+                showToc();
+              }
+            );
+            return;
+          }
+          if (
+            replaceIdx >= 0 &&
+            !isNaN(replaceIdx) &&
+            manifest.pages[replaceIdx] &&
+            manifest.pages[replaceIdx].kind === "image"
+          ) {
+            var rfile = manifest.pages[replaceIdx].file;
+            saveImageToDisk(rfile, picked).then(
+              function () {
+                inputImageFile.value = "";
+                pageIndex = replaceIdx;
+                renderPage();
+                flashSaved();
+              },
+              function () {}
+            );
+            return;
+          }
+          if (pageIndex < 0 || !manifest.pages[pageIndex]) {
+            inputImageFile.value = "";
+            return;
+          }
+          var pg = manifest.pages[pageIndex];
+          if (!pg || pg.kind !== "image" || !pg._newPage) {
+            inputImageFile.value = "";
+            return;
+          }
+          saveImageToDisk(pg.file, picked).then(
+            function () {
+              inputImageFile.value = "";
+              renderPage();
+              if (pageImgFoot) pageImgFoot.hidden = true;
+              if (btnPickImage) btnPickImage.hidden = true;
+              flashSaved();
+            },
+            function () {}
+          );
+        });
+      }
+
       btnBack.addEventListener("click", function () {
         if (pageIndex > 0) {
           pageIndex--;
@@ -666,16 +1264,114 @@
         window.location.href = "game.html";
       });
 
-      fetch("book/book-manifest.json", { cache: "no-store" })
-        .then(function (r) {
+      function flashTocTitleSaved() {
+        if (!tocTitleHint) return;
+        var base = tocTitleHint.textContent.replace(/\s*—\s*сохранено\.?$/i, "").trim();
+        tocTitleHint.textContent = base + " — сохранено.";
+        window.setTimeout(function () {
+          tocTitleHint.textContent = base;
+        }, 2000);
+      }
+
+      var titleDialogKeyBound = false;
+      function onTitleDialogDocKeydown(ev) {
+        if (!titleDialog || titleDialog.hidden) return;
+        if (ev.key === "Escape") {
+          ev.preventDefault();
+          closeTitleDialog();
+        } else if (ev.key === "Enter" && ev.target === titleDialogInput) {
+          ev.preventDefault();
+          saveTitleFromDialog();
+        }
+      }
+      function openTitleDialog(editIndex) {
+        if (!isLocalServer() || !manifest || !manifest.pages.length) return;
+        var idx =
+          typeof editIndex === "number" && !isNaN(editIndex) && editIndex >= 0
+            ? editIndex | 0
+            : pageIndex;
+        if (idx < 0 || idx >= manifest.pages.length) return;
+        titleEditIndex = idx;
+        if (!titleDialog || !titleDialogInput || !titleDialogFilename) return;
+        var p = manifest.pages[idx];
+        exitEditMode(true);
+        titleDialogFilename.textContent = p.file;
+        titleDialogInput.value = getPageTitle(p.file);
+        titleDialog.hidden = false;
+        if (!titleDialogKeyBound) {
+          titleDialogKeyBound = true;
+          document.addEventListener("keydown", onTitleDialogDocKeydown, true);
+        }
+        window.setTimeout(function () {
+          titleDialogInput.focus();
+          titleDialogInput.select();
+        }, 0);
+      }
+      function closeTitleDialog() {
+        titleEditIndex = -1;
+        if (titleDialog) titleDialog.hidden = true;
+      }
+      function saveTitleFromDialog() {
+        if (!isLocalServer()) return;
+        var idx = titleEditIndex;
+        if (idx < 0 || !manifest.pages[idx]) return;
+        var p = manifest.pages[idx];
+        var raw = titleDialogInput.value.trim();
+        var prev = getPageTitle(p.file);
+        titlesByFile[p.file] = raw;
+        closeTitleDialog();
+        saveJsonToDisk("book-titles.json", collectTitlesPayload()).then(
+          function () {
+            buildToc();
+            if (!viewToc.hidden) {
+              flashTocTitleSaved();
+            } else {
+              refreshPageLabel();
+              flashSaved();
+            }
+          },
+          function () {
+            titlesByFile[p.file] = prev;
+          }
+        );
+      }
+      if (titleDialogSave) {
+        titleDialogSave.addEventListener("click", function () {
+          saveTitleFromDialog();
+        });
+      }
+      if (titleDialogCancel) {
+        titleDialogCancel.addEventListener("click", function () {
+          closeTitleDialog();
+        });
+      }
+      if (titleDialogBackdrop) {
+        titleDialogBackdrop.addEventListener("click", function () {
+          closeTitleDialog();
+        });
+      }
+
+      Promise.all([
+        fetch("book/book-manifest.json", { cache: "no-store" }).then(function (r) {
           if (!r.ok) throw new Error("manifest " + r.status);
           return r.json();
-        })
-        .then(function (data) {
+        }),
+        fetch(TITLES_JSON, { cache: "no-store" })
+          .then(function (r) {
+            return r.ok ? r.json() : {};
+          })
+          .catch(function () {
+            return {};
+          })
+      ])
+        .then(function (pair) {
+          var data = pair[0];
+          var tdata = pair[1];
           if (!data || !Array.isArray(data.pages) || data.pages.length === 0) {
             throw new Error("empty book");
           }
           manifest = data;
+          mergeTitlesFromJson(tdata);
           buildToc();
           showToc();
           setNavState();
