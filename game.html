@@ -122,6 +122,7 @@
         grid-template-columns: 1fr;
         padding: 12px;
         gap: 12px;
+        align-content: start;
       }
       main > div:first-of-type {
         padding-right: var(--fab-rail);
@@ -171,11 +172,6 @@
       flex-direction: column;
       align-items: center;
       min-height: 280px;
-    }
-    @media (max-width: 720px) {
-      #stage {
-        padding-right: max(16px, var(--fab-rail));
-      }
     }
     #current-wrap {
       flex: 1;
@@ -779,6 +775,66 @@
     }
     .series-footer-btn:hover {
       filter: brightness(1.08);
+    }
+    /* мобильный экран: задание сверху, клавиши ниже; меньше пустой высоты */
+    @media (max-width: 720px) {
+      main {
+        gap: 8px;
+        padding: 8px;
+      }
+      main > div:first-of-type {
+        order: 2;
+      }
+      #stage {
+        order: 1;
+        min-height: 0;
+        padding: 10px max(10px, var(--fab-rail)) 6px 10px;
+      }
+      #current-wrap {
+        min-height: 72px;
+      }
+      #current-img {
+        max-height: min(34vh, 280px);
+      }
+      #current-img.stage-txt {
+        max-height: min(36vh, 260px);
+        padding: 8px 12px;
+      }
+      #stage-text-card {
+        padding: 12px 14px;
+        font-size: 0.95rem;
+      }
+      #stage-text-card .stage-text-main {
+        font-size: 0.95rem;
+        line-height: 1.4;
+      }
+      #stage-text-card .stage-text-series {
+        font-size: 0.75rem;
+        margin-bottom: 6px;
+      }
+      .rows {
+        gap: 5px;
+      }
+      .row-slot {
+        padding: 4px 6px;
+        gap: 6px;
+        border-radius: 8px;
+      }
+      .thumbs {
+        min-height: 30px;
+        gap: 4px;
+      }
+      .thumbs img {
+        width: 36px;
+        height: 36px;
+      }
+      #feedback {
+        margin-top: 4px;
+        min-height: 1.15em;
+      }
+      main > div:first-of-type .meta {
+        margin-bottom: 4px;
+      }
     }
   </style>
 </head>
