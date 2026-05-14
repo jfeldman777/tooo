@@ -111,19 +111,20 @@
       user-select: none;
     }
     @media (max-width: 720px) {
+      :root {
+        --fab-size: 44px;
+        --fab-gap: 6px;
+        /* одна вертикальная колонка у правого края */
+        --fab-rail: calc(env(safe-area-inset-right, 0px) + var(--fab-size) + 10px);
+        --kbd-picto: 38px;
+      }
       main {
         grid-template-columns: 1fr;
         padding: 12px;
         gap: 12px;
       }
-      /* чтобы строка со счётом не заезжала под круглые кнопки справа */
       main > div:first-of-type {
-        padding-right: calc(env(safe-area-inset-right, 0px) + 176px);
-      }
-    }
-    @media (max-width: 400px) {
-      main > div:first-of-type {
-        padding-right: calc(env(safe-area-inset-right, 0px) + 158px);
+        padding-right: var(--fab-rail);
       }
     }
     .kbd-digit {
@@ -170,6 +171,11 @@
       flex-direction: column;
       align-items: center;
       min-height: 280px;
+    }
+    @media (max-width: 720px) {
+      #stage {
+        padding-right: max(16px, var(--fab-rail));
+      }
     }
     #current-wrap {
       flex: 1;
@@ -276,29 +282,6 @@
     #feedback.bad { color: #f48a8a; }
     #feedback.ok { color: #7dd4b0; }
     @media (max-width: 520px) {
-      #help-fab,
-      #info-fab,
-      #series-fab,
-      #book-fab {
-        width: 40px;
-        height: 40px;
-        border-width: 2px;
-        top: max(8px, env(safe-area-inset-top, 0px));
-      }
-      #help-fab {
-        right: max(8px, env(safe-area-inset-right, 0px));
-        font-size: 1.2rem;
-      }
-      #info-fab {
-        right: calc(max(8px, env(safe-area-inset-right, 0px)) + 48px);
-        font-size: 1.2rem;
-      }
-      #series-fab {
-        right: calc(max(8px, env(safe-area-inset-right, 0px)) + 96px);
-      }
-      #book-fab {
-        right: calc(max(8px, env(safe-area-inset-right, 0px)) + 144px);
-      }
       .game-stats {
         font-size: 0.76rem;
       }
@@ -619,6 +602,48 @@
     }
     #book-fab:active {
       transform: scale(0.96);
+    }
+    /* после базовых FAB — иначе горизонтальные top/right перебивают вертикальную колонку */
+    @media (max-width: 720px) {
+      #help-fab,
+      #info-fab,
+      #series-fab,
+      #book-fab {
+        width: var(--fab-size);
+        height: var(--fab-size);
+        border-width: 2px;
+        left: auto;
+        bottom: auto;
+        right: max(6px, env(safe-area-inset-right, 0px)) !important;
+      }
+      #book-fab {
+        top: max(10px, env(safe-area-inset-top, 0px));
+      }
+      #series-fab {
+        top: calc(max(10px, env(safe-area-inset-top, 0px)) + var(--fab-size) + var(--fab-gap));
+      }
+      #info-fab {
+        top: calc(
+          max(10px, env(safe-area-inset-top, 0px)) + 2 * (var(--fab-size) + var(--fab-gap))
+        );
+      }
+      #help-fab {
+        top: calc(
+          max(10px, env(safe-area-inset-top, 0px)) + 3 * (var(--fab-size) + var(--fab-gap))
+        );
+        font-size: 1.2rem;
+      }
+      body:has(#series-fab[hidden]) #book-fab {
+        top: max(10px, env(safe-area-inset-top, 0px));
+      }
+      body:has(#series-fab[hidden]) #info-fab {
+        top: calc(max(10px, env(safe-area-inset-top, 0px)) + var(--fab-size) + var(--fab-gap));
+      }
+      body:has(#series-fab[hidden]) #help-fab {
+        top: calc(
+          max(10px, env(safe-area-inset-top, 0px)) + 2 * (var(--fab-size) + var(--fab-gap))
+        );
+      }
     }
     .series-overlay {
       position: fixed;
