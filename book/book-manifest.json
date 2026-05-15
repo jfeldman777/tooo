@@ -63,6 +63,14 @@
     {
       "file": "16.png",
       "kind": "image"
+    },
+    {
+      "file": "17.png",
+      "kind": "image"
+    },
+    {
+      "file": "18.txt",
+      "kind": "text"
     }
   ]
 }
