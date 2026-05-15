@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-  <link rel="icon" href="favicon.svg" type="image/svg+xml" sizes="any" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" sizes="any">
   <title>Книга</title>
   <style>
     :root {
@@ -302,6 +302,7 @@
       justify-content: center;
       text-align: center;
       overflow: hidden;
+      -webkit-hyphens: none;
       hyphens: none;
     }
     .nav button svg {
@@ -404,7 +405,7 @@
   </style>
 </head>
 <body>
-  <div id="edit-toolbar" hidden aria-label="Редактирование (только локальный сервер)">
+  <div id="edit-toolbar" role="toolbar" hidden aria-label="Редактирование (только локальный сервер)">
     <button type="button" id="btn-edit" aria-label="Редактировать" title="Редактировать">
       <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
         <path fill="currentColor" d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
@@ -438,7 +439,7 @@
         <div id="page-body">
           <pre id="page-text" hidden></pre>
           <textarea id="page-text-edit" hidden spellcheck="true" rows="12"></textarea>
-          <img id="page-img" alt="" hidden decoding="async" />
+          <img id="page-img" alt="" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" hidden decoding="async">
           <div id="page-img-foot" hidden>
             <p id="page-img-missing" class="page-img-missing"></p>
             <button type="button" id="btn-pick-image" hidden aria-label="Выбрать PNG" title="Выбрать PNG">
@@ -446,7 +447,7 @@
                 <path fill="currentColor" d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z"/>
               </svg>
             </button>
-            <input type="file" id="input-image-file" accept="image/png,.png" hidden />
+            <input type="file" id="input-image-file" accept="image/png,.png" hidden>
           </div>
         </div>
       </div>
@@ -458,7 +459,7 @@
     <div class="title-dialog-panel">
       <h2 id="title-dialog-h" class="title-dialog-heading">Титул страницы</h2>
       <p class="title-dialog-sub" id="title-dialog-filename"></p>
-      <input type="text" id="title-dialog-input" class="title-dialog-input" maxlength="240" autocomplete="off" />
+      <input type="text" id="title-dialog-input" class="title-dialog-input" maxlength="240" autocomplete="off">
       <div class="title-dialog-actions">
         <button type="button" class="title-dialog-btn title-dialog-btn--primary" id="title-dialog-save">Сохранить</button>
         <button type="button" class="title-dialog-btn" id="title-dialog-cancel">Отмена</button>

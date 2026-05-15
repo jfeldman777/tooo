@@ -17,8 +17,8 @@ $htmlHeader = @"
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Галерея — $(Escape-Html $leaf)</title>
   <style>
     * { box-sizing: border-box; }
@@ -71,8 +71,8 @@ foreach ($f in $files) {
     $nameEsc = Escape-Html $f.Name
     $relEsc = Escape-Html $rel
     [void]$sb.AppendLine("    <figure>")
-    [void]$sb.AppendLine("      <img loading=`"lazy`" src=`"$uri`" alt=`"$nameEsc`" />")
-    [void]$sb.AppendLine("      <figcaption><strong>$nameEsc</strong><br/><span class=`"path`">$relEsc</span></figcaption>")
+    [void]$sb.AppendLine("      <img loading=`"lazy`" src=`"$uri`" alt=`"$nameEsc`">")
+    [void]$sb.AppendLine("      <figcaption><strong>$nameEsc</strong><br><span class=`"path`">$relEsc</span></figcaption>")
     [void]$sb.AppendLine("    </figure>")
 }
 
