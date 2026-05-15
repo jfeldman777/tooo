@@ -429,7 +429,7 @@
   <div id="app">
     <div id="view-toc" hidden>
       <h1>Оглавление</h1>
-      <p id="toc-title-hint" class="toc-hint" hidden>В каждой строке кнопка с «T» — титул для оглавления (файл <code>book/book-titles.json</code>).</p>
+      <p id="toc-title-hint" class="toc-hint" hidden>В каждой строке кнопка с «T» — титул (<code>book/book-titles.json</code>). При первом сохранении выберите папку <code>book</code> проекта; заголовки дублируются в браузере и не пропадут после F5.</p>
       <ul id="toc-list"></ul>
     </div>
     <div id="view-page" hidden>
@@ -484,8 +484,16 @@
       "use strict";
       var BOOK_PREFIX = "book/";
       var TITLES_JSON = "book/book-titles.json";
+      var TITLES_STORAGE_KEY = "book-titles-v1";
+      var MANIFEST_STORAGE_KEY = "book-manifest-v1";
+      var IMAGE_IDB = "book-images-v1";
+      var IMAGE_IDB_STORE = "blobs";
       var manifest = null;
       var titlesByFile = {};
+      var textByFile = {};
+      var imageBlobUrlByFile = {};
+      var pageImageObjectUrl = null;
+      var imageLoadSeq = 0;
       var pageIndex = -1;
       var editMode = false;
       var pendingOpenEdit = false;
@@ -520,9 +528,426 @@
       var titleDialogSave = document.getElementById("title-dialog-save");
       var titleDialogCancel = document.getElementById("title-dialog-cancel");
       var tocPngPickActive = false;
-      var tocPickerTimer = null;
       var imageSrcNonce = 0;
+      var textSrcNonce = 0;
+      var pageTextLoadSeq = 0;
       var titleEditIndex = -1;
+      var bookDirHandle = null;
+      var BOOK_DIR_IDB = "book-editor-v1";
+      var BOOK_DIR_STORE = "handles";
+      var BOOK_DIR_KEY = "bookDir";
+
+      function openBookDirIdb() {
+        return new Promise(function (resolve, reject) {
+          if (!("indexedDB" in window)) {
+            reject(new Error("no idb"));
+            return;
+          }
+          var req = indexedDB.open(BOOK_DIR_IDB, 1);
+          req.onerror = function () {
+            reject(req.error);
+          };
+          req.onsuccess = function () {
+            resolve(req.result);
+          };
+          req.onupgradeneeded = function (ev) {
+            var db = ev.target.result;
+            if (!db.objectStoreNames.contains(BOOK_DIR_STORE)) {
+              db.createObjectStore(BOOK_DIR_STORE);
+            }
+          };
+        });
+      }
+
+      function loadStoredBookDirHandle() {
+        return openBookDirIdb()
+          .then(function (db) {
+            return new Promise(function (resolve, reject) {
+              var tx = db.transaction(BOOK_DIR_STORE, "readonly");
+              var req = tx.objectStore(BOOK_DIR_STORE).get(BOOK_DIR_KEY);
+              req.onsuccess = function () {
+                resolve(req.result || null);
+              };
+              req.onerror = function () {
+                reject(req.error);
+              };
+            });
+          })
+          .catch(function () {
+            return null;
+          });
+      }
+
+      function storeBookDirHandle(handle) {
+        return openBookDirIdb().then(function (db) {
+          return new Promise(function (resolve, reject) {
+            var tx = db.transaction(BOOK_DIR_STORE, "readwrite");
+            tx.objectStore(BOOK_DIR_STORE).put(handle, BOOK_DIR_KEY);
+            tx.oncomplete = function () {
+              resolve();
+            };
+            tx.onerror = function () {
+              reject(tx.error);
+            };
+          });
+        });
+      }
+
+      function verifyBookDirPermission(handle) {
+        if (!handle || typeof handle.queryPermission !== "function") {
+          return Promise.resolve(false);
+        }
+        var opts = { mode: "readwrite" };
+        return handle
+          .queryPermission(opts)
+          .then(function (state) {
+            if (state === "granted") return true;
+            if (typeof handle.requestPermission !== "function") return false;
+            return handle.requestPermission(opts).then(function (s) {
+              return s === "granted";
+            });
+          })
+          .catch(function () {
+            return false;
+          });
+      }
+
+      function pickBookDir() {
+        if (typeof window.showDirectoryPicker !== "function") {
+          return Promise.reject(new Error("no directory picker"));
+        }
+        return window.showDirectoryPicker({ mode: "readwrite" }).then(function (dir) {
+          bookDirHandle = dir;
+          return storeBookDirHandle(dir).then(function () {
+            return dir;
+          });
+        });
+      }
+
+      function ensureBookDir() {
+        if (!isLocalServer()) return Promise.resolve(null);
+        if (bookDirHandle) {
+          return verifyBookDirPermission(bookDirHandle).then(function (ok) {
+            return ok ? bookDirHandle : null;
+          });
+        }
+        return loadStoredBookDirHandle().then(function (stored) {
+          if (!stored) return null;
+          return verifyBookDirPermission(stored).then(function (ok) {
+            if (ok) {
+              bookDirHandle = stored;
+              return stored;
+            }
+            return null;
+          });
+        });
+      }
+
+      function ensureBookDirWritable() {
+        return ensureBookDir().then(function (dir) {
+          return dir || pickBookDir();
+        });
+      }
+
+      function writeBlobToFileHandle(fileHandle, blob) {
+        return fileHandle.createWritable().then(function (w) {
+          return w.write(blob).then(function () {
+            return w.close();
+          });
+        });
+      }
+
+      function writeBookFile(filename, blob) {
+        return ensureBookDirWritable().then(function (dir) {
+          return dir.getFileHandle(filename, { create: true }).then(function (fh) {
+            return writeBlobToFileHandle(fh, blob);
+          });
+        });
+      }
+
+      function readBookFileText(filename) {
+        return ensureBookDir().then(function (dir) {
+          if (!dir) return Promise.reject(new Error("no book dir"));
+          return dir.getFileHandle(filename).then(function (fh) {
+            return fh.getFile();
+          }).then(function (file) {
+            return file.text();
+          });
+        });
+      }
+
+      function readBookFileBlob(filename) {
+        return ensureBookDir().then(function (dir) {
+          if (!dir) return Promise.reject(new Error("no book dir"));
+          return dir.getFileHandle(filename).then(function (fh) {
+            return fh.getFile();
+          });
+        });
+      }
+
+      function openImageIdb() {
+        return new Promise(function (resolve, reject) {
+          if (!("indexedDB" in window)) {
+            reject(new Error("no idb"));
+            return;
+          }
+          var req = indexedDB.open(IMAGE_IDB, 1);
+          req.onerror = function () {
+            reject(req.error);
+          };
+          req.onsuccess = function () {
+            resolve(req.result);
+          };
+          req.onupgradeneeded = function (ev) {
+            var db = ev.target.result;
+            if (!db.objectStoreNames.contains(IMAGE_IDB_STORE)) {
+              db.createObjectStore(IMAGE_IDB_STORE);
+            }
+          };
+        });
+      }
+
+      function idbPutImage(filename, blob) {
+        return openImageIdb()
+          .then(function (db) {
+            return new Promise(function (resolve, reject) {
+              var tx = db.transaction(IMAGE_IDB_STORE, "readwrite");
+              tx.objectStore(IMAGE_IDB_STORE).put(blob, filename);
+              tx.oncomplete = function () {
+                resolve();
+              };
+              tx.onerror = function () {
+                reject(tx.error);
+              };
+            });
+          })
+          .catch(function () {});
+      }
+
+      function idbGetImage(filename) {
+        return openImageIdb()
+          .then(function (db) {
+            return new Promise(function (resolve, reject) {
+              var tx = db.transaction(IMAGE_IDB_STORE, "readonly");
+              var req = tx.objectStore(IMAGE_IDB_STORE).get(filename);
+              req.onsuccess = function () {
+                resolve(req.result || null);
+              };
+              req.onerror = function () {
+                reject(req.error);
+              };
+            });
+          })
+          .catch(function () {
+            return null;
+          });
+      }
+
+      function fetchBookImageBlob(filename) {
+        return fetch(BOOK_PREFIX + filename + "?v=" + String(++imageSrcNonce), { cache: "no-store" }).then(
+          function (r) {
+            if (!r.ok) throw new Error(String(r.status));
+            return r.blob();
+          }
+        );
+      }
+
+      function loadManifestFromBookDir() {
+        return readBookFileText("book-manifest.json")
+          .then(function (text) {
+            if (!text || !text.length) return null;
+            try {
+              return JSON.parse(text);
+            } catch (e) {
+              return null;
+            }
+          })
+          .catch(function () {
+            return null;
+          });
+      }
+
+      function pickBestManifest(httpData, lsData, dirData) {
+        var best = httpData;
+        [lsData, dirData].forEach(function (m) {
+          if (m && Array.isArray(m.pages) && m.pages.length && (!best || m.pages.length > best.pages.length)) {
+            best = m;
+          }
+        });
+        return best;
+      }
+
+      function revokePageImageObjectUrl() {
+        if (pageImageObjectUrl) {
+          URL.revokeObjectURL(pageImageObjectUrl);
+          pageImageObjectUrl = null;
+        }
+      }
+
+      function rememberSavedPageImage(filename, blob) {
+        if (imageBlobUrlByFile[filename]) {
+          URL.revokeObjectURL(imageBlobUrlByFile[filename]);
+        }
+        imageBlobUrlByFile[filename] = URL.createObjectURL(blob);
+        idbPutImage(filename, blob);
+        if (!manifest || !manifest.pages) return;
+        manifest.pages.forEach(function (pg) {
+          if (pg.file === filename) delete pg._newPage;
+        });
+      }
+
+      function showPageImageOk() {
+        if (pageImgFoot) pageImgFoot.hidden = true;
+        if (btnPickImage) btnPickImage.hidden = true;
+        if (pageImgMissing) pageImgMissing.textContent = "";
+      }
+
+      function showPageImageError(p) {
+        if (!pageImgFoot || !pageImgMissing) return;
+        pageImgMissing.textContent =
+          "Не найден «" +
+          p.file +
+          "». Нажмите кнопку ↓ ниже или иконку карандаша вверху — выберите PNG и папку book проекта.";
+        pageImgFoot.hidden = false;
+        if (isLocalServer() && btnPickImage) btnPickImage.hidden = false;
+      }
+
+      function setPageImageFromBlob(blob, loadSeq, p) {
+        if (loadSeq !== imageLoadSeq) return;
+        revokePageImageObjectUrl();
+        pageImageObjectUrl = URL.createObjectURL(blob);
+        pageImg.onload = function () {
+          if (loadSeq !== imageLoadSeq) return;
+          pageImg.onload = null;
+          pageImg.onerror = null;
+          if (p && p._newPage) delete p._newPage;
+          showPageImageOk();
+          setNavState();
+          updateEditToolbar();
+        };
+        pageImg.onerror = function () {
+          if (loadSeq !== imageLoadSeq) return;
+          pageImg.onerror = null;
+          pageImg.onload = null;
+          if (p) showPageImageError(p);
+          setNavState();
+          updateEditToolbar();
+        };
+        pageImg.src = pageImageObjectUrl;
+      }
+
+      function loadPageImageFor(p) {
+        var loadSeq = ++imageLoadSeq;
+        revokePageImageObjectUrl();
+        pageImg.hidden = false;
+        pageImg.alt = getPageTitle(p.file).trim() || p.file;
+        if (pageImgFoot) pageImgFoot.hidden = true;
+        if (btnPickImage) btnPickImage.hidden = true;
+        if (pageImgMissing) pageImgMissing.textContent = "";
+        pageImg.removeAttribute("src");
+
+        function finishError() {
+          if (loadSeq !== imageLoadSeq) return;
+          showPageImageError(p);
+          setNavState();
+          updateEditToolbar();
+        }
+
+        function finishBlob(blob) {
+          if (loadSeq !== imageLoadSeq || !blob) return;
+          rememberSavedPageImage(p.file, blob);
+          setPageImageFromBlob(blob, loadSeq, p);
+        }
+
+        var cachedUrl = imageBlobUrlByFile[p.file];
+        if (cachedUrl) {
+          pageImg.onload = function () {
+            if (loadSeq !== imageLoadSeq) return;
+            pageImg.onload = null;
+            pageImg.onerror = null;
+            if (p._newPage) delete p._newPage;
+            showPageImageOk();
+            setNavState();
+            updateEditToolbar();
+          };
+          pageImg.onerror = function () {
+            if (loadSeq !== imageLoadSeq) return;
+            pageImg.onerror = null;
+            pageImg.onload = null;
+            delete imageBlobUrlByFile[p.file];
+            loadPageImageFor(p);
+          };
+          pageImg.src = cachedUrl;
+          return;
+        }
+
+        idbGetImage(p.file).then(function (idbBlob) {
+          if (loadSeq !== imageLoadSeq) return;
+          if (idbBlob) {
+            finishBlob(idbBlob);
+            return;
+          }
+          var httpP = fetchBookImageBlob(p.file).catch(function () {
+            return null;
+          });
+          var dirP = readBookFileBlob(p.file).catch(function () {
+            return null;
+          });
+          Promise.all([httpP, dirP]).then(function (pair) {
+            if (loadSeq !== imageLoadSeq) return;
+            var blob = pair[0] || pair[1];
+            if (blob) finishBlob(blob);
+            else finishError();
+          });
+        });
+      }
+
+      function rememberSavedPageText(filename, text) {
+        textByFile[filename] = text == null ? "" : String(text);
+        if (!manifest || !manifest.pages) return;
+        manifest.pages.forEach(function (pg) {
+          if (pg.file === filename) delete pg._newPage;
+        });
+      }
+
+      function pickBestPageText(file, httpText, dirText) {
+        var h = httpText == null ? "" : String(httpText);
+        var d = dirText == null ? "" : String(dirText);
+        var best = d.length > h.length ? d : h;
+        if (best.length) return best;
+        var c = textByFile[file];
+        return c && String(c).length ? String(c) : "";
+      }
+
+      function loadPageTextFor(p, loadSeq, openAfter) {
+        function finish(t) {
+          if (loadSeq !== pageTextLoadSeq) return;
+          applyLoadedPageText(p, t);
+          if (openAfter) enterEditMode();
+          setNavState();
+          updateEditToolbar();
+        }
+
+        var httpP = fetch(BOOK_PREFIX + p.file + "?v=" + String(++textSrcNonce), { cache: "no-store" })
+          .then(function (r) {
+            if (!r.ok) {
+              if (p._newPage && r.status === 404) return "";
+              throw new Error(String(r.status));
+            }
+            return r.text();
+          })
+          .catch(function () {
+            return "";
+          });
+
+        var dirP = readBookFileText(p.file).catch(function () {
+          return "";
+        });
+
+        Promise.all([httpP, dirP]).then(function (pair) {
+          return pickBestPageText(p.file, pair[0], pair[1]);
+        }).then(finish);
+      }
 
       function isAllowedPng(file) {
         if (!file) return false;
@@ -531,44 +956,24 @@
         return /\.png$/i.test(String(file.name || ""));
       }
 
-      function tocPickerFocusHandler() {
-        window.removeEventListener("focus", tocPickerFocusHandler, true);
-        if (tocPickerTimer) window.clearTimeout(tocPickerTimer);
-        tocPickerTimer = window.setTimeout(function () {
-          tocPickerTimer = null;
-          if (
-            tocPngPickActive &&
-            inputImageFile &&
-            (!inputImageFile.files || !inputImageFile.files.length)
-          ) {
-            tocPngPickActive = false;
-          }
-        }, 650);
-      }
-
       function openNewPngFromToc() {
-        if (!isLocalServer() || !manifest || !inputImageFile) return;
-        window.removeEventListener("focus", tocPickerFocusHandler, true);
-        if (tocPickerTimer) {
-          window.clearTimeout(tocPickerTimer);
-          tocPickerTimer = null;
+        if (!manifest || !inputImageFile) return;
+        if (!isLocalServer()) {
+          window.alert(
+            "Добавление картинок доступно только при открытии книги через локальный сервер (localhost или 127.0.0.1), не через file:// с диска."
+          );
+          return;
         }
         inputImageFile.removeAttribute("data-replace-index");
         inputImageFile.accept = "image/png,.png";
         inputImageFile.value = "";
         tocPngPickActive = true;
-        window.addEventListener("focus", tocPickerFocusHandler, true);
         inputImageFile.click();
       }
 
       function startReplaceImage(index) {
         if (!isLocalServer() || !manifest || !inputImageFile) return;
         if (index < 0 || !manifest.pages[index] || manifest.pages[index].kind !== "image") return;
-        window.removeEventListener("focus", tocPickerFocusHandler, true);
-        if (tocPickerTimer) {
-          window.clearTimeout(tocPickerTimer);
-          tocPickerTimer = null;
-        }
         tocPngPickActive = false;
         inputImageFile.setAttribute("data-replace-index", String(index));
         inputImageFile.accept = "image/png,.png";
@@ -592,13 +997,40 @@
         return String(v);
       }
 
-      function mergeTitlesFromJson(tdata) {
-        titlesByFile = {};
-        if (tdata && tdata.byFile && typeof tdata.byFile === "object") {
-          Object.keys(tdata.byFile).forEach(function (k) {
-            titlesByFile[k] = tdata.byFile[k] == null ? "" : String(tdata.byFile[k]);
-          });
-        }
+      function mergeTitlesIntoStore(tdata) {
+        if (!tdata || !tdata.byFile || typeof tdata.byFile !== "object") return;
+        Object.keys(tdata.byFile).forEach(function (k) {
+          var incoming = tdata.byFile[k] == null ? "" : String(tdata.byFile[k]).trim();
+          if (incoming.length) {
+            titlesByFile[k] = incoming;
+          } else if (!Object.prototype.hasOwnProperty.call(titlesByFile, k)) {
+            titlesByFile[k] = "";
+          }
+        });
+      }
+
+      function loadTitlesFromLocalStorage() {
+        try {
+          var raw = localStorage.getItem(TITLES_STORAGE_KEY);
+          if (raw) mergeTitlesIntoStore(JSON.parse(raw));
+        } catch (e) {}
+      }
+
+      function saveTitlesToLocalStorage() {
+        try {
+          localStorage.setItem(TITLES_STORAGE_KEY, JSON.stringify(collectTitlesPayload()));
+        } catch (e) {}
+      }
+
+      function loadTitlesFromBookDir() {
+        return readBookFileText("book-titles.json")
+          .then(function (text) {
+            if (!text || !text.length) return;
+            try {
+              mergeTitlesIntoStore(JSON.parse(text));
+            } catch (e) {}
+          })
+          .catch(function () {});
       }
 
       function formatTocLine(i, p) {
@@ -625,9 +1057,76 @@
         return o;
       }
 
+      function manifestForDisk() {
+        var out = [];
+        if (!manifest || !manifest.pages) return { pages: out };
+        manifest.pages.forEach(function (p) {
+          out.push({ file: p.file, kind: p.kind });
+        });
+        return { pages: out };
+      }
+
+      function saveManifestToLocalStorage() {
+        try {
+          localStorage.setItem(MANIFEST_STORAGE_KEY, JSON.stringify(manifestForDisk()));
+        } catch (e) {}
+      }
+
+      function loadManifestFromLocalStorage() {
+        try {
+          var raw = localStorage.getItem(MANIFEST_STORAGE_KEY);
+          if (!raw) return null;
+          return JSON.parse(raw);
+        } catch (e) {
+          return null;
+        }
+      }
+
+      function persistManifestToDisk() {
+        saveManifestToLocalStorage();
+        if (!isLocalServer()) return Promise.resolve();
+        var text = JSON.stringify(manifestForDisk(), null, 2);
+        var blob = new Blob([text], { type: "application/json;charset=utf-8" });
+        return writeBookFile("book-manifest.json", blob).catch(function () {
+          return saveJsonToDisk("book-manifest.json", manifestForDisk());
+        });
+      }
+
+      function persistTitlesToDisk() {
+        var payload = collectTitlesPayload();
+        saveTitlesToLocalStorage();
+        if (!isLocalServer()) return Promise.resolve();
+        var text = JSON.stringify(payload, null, 2);
+        var blob = new Blob([text], { type: "application/json;charset=utf-8" });
+        return writeBookFile("book-titles.json", blob).catch(function () {
+          return saveJsonToDiskWithPicker("book-titles.json", payload);
+        });
+      }
+
       function refreshPageLabel() {
         if (pageIndex < 0 || !manifest || !manifest.pages[pageIndex]) return;
         pageLabel.textContent = formatPageLabel(pageIndex, manifest.pages[pageIndex]);
+      }
+
+      function applyLoadedPageText(p, text) {
+        var t = text == null ? "" : String(text);
+        if (t.length) {
+          if (p._newPage) delete p._newPage;
+          textByFile[p.file] = t;
+          pageText.textContent = t;
+          pageText.hidden = false;
+          return;
+        }
+        if (p._newPage) {
+          pageText.textContent = "";
+          pageText.hidden = false;
+          return;
+        }
+        pageText.textContent =
+          "(текст не найден: сохраните " +
+          p.file +
+          " в папку book проекта и обновите страницу F5)";
+        pageText.hidden = false;
       }
 
       function showNewPageButtons() {
@@ -653,6 +1152,7 @@
         var n = maxLeadingPageNum() + 1;
         manifest.pages.push({ file: n + ".txt", kind: "text", _newPage: true });
         buildToc();
+        persistManifestToDisk().catch(function () {});
         pageIndex = manifest.pages.length - 1;
         pendingOpenEdit = true;
         renderPage();
@@ -660,19 +1160,40 @@
 
       function isLocalServer() {
         var h = String(location.hostname || "").toLowerCase();
-        return h === "localhost" || h === "127.0.0.1" || h === "[::1]";
+        if (!h || h === "localhost" || h === "127.0.0.1" || h === "[::1]" || h === "0.0.0.0") {
+          return true;
+        }
+        if (/^192\.168\.\d{1,3}\.\d{1,3}$/.test(h)) return true;
+        if (/^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(h)) return true;
+        if (/^172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3}$/.test(h)) return true;
+        return false;
       }
 
       function enterEditMode() {
         if (!manifest || pageIndex < 0 || !manifest.pages[pageIndex]) return;
         if (manifest.pages[pageIndex].kind !== "text") return;
+        var p = manifest.pages[pageIndex];
         editMode = true;
-        pageTextEdit.value = pageText.textContent.replace(/\u00a0/g, "");
+        var val = pageText.textContent.replace(/\u00a0/g, "");
+        if (val.indexOf("(текст не найден") === 0) val = "";
+        pageTextEdit.value = val;
         pageText.hidden = true;
         pageTextEdit.hidden = false;
         pageBody.classList.remove("page-body--center");
         btnEdit.classList.add("is-active");
         pageTextEdit.focus();
+        if (!val.length && isLocalServer()) {
+          readBookFileText(p.file)
+            .then(function (t) {
+              if (!editMode || pageIndex < 0 || manifest.pages[pageIndex] !== p) return;
+              if (!t || !t.length) return;
+              delete p._newPage;
+              textByFile[p.file] = t;
+              pageText.textContent = t;
+              pageTextEdit.value = t;
+            })
+            .catch(function () {});
+        }
       }
 
       function exitEditMode(syncToPre) {
@@ -733,7 +1254,8 @@
         }
         var p = manifest.pages[pageIndex];
         if (p.kind === "image") {
-          hideNewPageButtons();
+          if (btnNewTxt) btnNewTxt.hidden = true;
+          if (btnNewImg) btnNewImg.hidden = false;
           exitEditMode(false);
           if (tocTitleHint) tocTitleHint.hidden = true;
           editToolbar.hidden = false;
@@ -782,6 +1304,21 @@
 
       function saveTextToDisk(filename, text) {
         var blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+        var body = text == null ? "" : String(text);
+        function afterWrite() {
+          rememberSavedPageText(filename, body);
+        }
+        if (isLocalServer()) {
+          return writeBookFile(filename, blob)
+            .then(afterWrite)
+            .catch(function () {
+              return saveTextToDiskWithPicker(filename, blob).then(afterWrite);
+            });
+        }
+        return saveTextToDiskWithPicker(filename, blob).then(afterWrite);
+      }
+
+      function saveTextToDiskWithPicker(filename, blob) {
         if (typeof window.showSaveFilePicker === "function") {
           return window
             .showSaveFilePicker({
@@ -812,6 +1349,20 @@
       }
 
       function saveImageToDisk(filename, blob) {
+        function afterWrite() {
+          rememberSavedPageImage(filename, blob);
+        }
+        if (isLocalServer()) {
+          return writeBookFile(filename, blob)
+            .then(afterWrite)
+            .catch(function () {
+              return saveImageToDiskWithPicker(filename, blob).then(afterWrite);
+            });
+        }
+        return saveImageToDiskWithPicker(filename, blob).then(afterWrite);
+      }
+
+      function saveImageToDiskWithPicker(filename, blob) {
         if (typeof window.showSaveFilePicker === "function") {
           return window
             .showSaveFilePicker({
@@ -842,6 +1393,17 @@
       }
 
       function saveJsonToDisk(filename, obj) {
+        var text = JSON.stringify(obj, null, 2);
+        var blob = new Blob([text], { type: "application/json;charset=utf-8" });
+        if (isLocalServer() && (filename === "book-manifest.json" || filename === "book-titles.json")) {
+          return writeBookFile(filename, blob).catch(function () {
+            return saveJsonToDiskWithPicker(filename, blob);
+          });
+        }
+        return saveJsonToDiskWithPicker(filename, blob);
+      }
+
+      function saveJsonToDiskWithPicker(filename, obj) {
         var text = JSON.stringify(obj, null, 2);
         var blob = new Blob([text], { type: "application/json;charset=utf-8" });
         if (typeof window.showSaveFilePicker === "function") {
@@ -909,6 +1471,7 @@
         pageTextEdit.value = "";
         pageImg.hidden = true;
         pageImg.removeAttribute("src");
+        if (manifest && manifest.pages && tocList) buildToc();
         setNavState();
         updateEditToolbar();
       }
@@ -936,77 +1499,14 @@
           if (inputImageFile) inputImageFile.value = "";
           pageText.hidden = false;
           pageBody.classList.add("page-body--center");
-          fetch(BOOK_PREFIX + p.file, { cache: "no-store" })
-            .then(function (r) {
-              if (!r.ok) {
-                if (p._newPage && r.status === 404) return "";
-                throw new Error(r.status);
-              }
-              return r.text();
-            })
-            .then(function (t) {
-              if (p._newPage && (!t || !t.length)) {
-                pageText.textContent = "";
-              } else {
-                pageText.textContent = t && t.length ? t : "\u00a0";
-              }
-            })
-            .catch(function () {
-              pageText.textContent = p._newPage ? "" : "(не удалось загрузить текст)";
-            })
-            .then(function () {
-              if (openAfter) {
-                enterEditMode();
-              }
-              setNavState();
-              updateEditToolbar();
-            });
+          loadPageTextFor(p, ++pageTextLoadSeq, openAfter);
         } else {
           pageText.hidden = true;
           pageText.textContent = "";
           pageTextEdit.value = "";
           pageBody.classList.remove("page-body--center");
-          if (pageImgFoot) pageImgFoot.hidden = true;
-          if (btnPickImage) btnPickImage.hidden = true;
           if (inputImageFile) inputImageFile.value = "";
-          if (pageImgMissing) pageImgMissing.textContent = "";
-          pageImg.onload = function () {
-            pageImg.onload = null;
-            pageImg.onerror = null;
-            if (pageImgFoot) pageImgFoot.hidden = true;
-            if (btnPickImage) btnPickImage.hidden = true;
-          };
-          pageImg.onerror = function () {
-            pageImg.onerror = null;
-            pageImg.onload = null;
-            if (!pageImgFoot || !pageImgMissing) {
-              setNavState();
-              updateEditToolbar();
-              return;
-            }
-            if (p._newPage && isLocalServer()) {
-              pageImgMissing.textContent =
-                "Файла пока нет. Добавьте «" +
-                BOOK_PREFIX +
-                p.file +
-                "» (только PNG) или нажмите кнопку ниже, выберите PNG и сохраните файл в папку book под именем «" +
-                p.file +
-                "».";
-              pageImgFoot.hidden = false;
-              if (btnPickImage) btnPickImage.hidden = false;
-            } else {
-              pageImgMissing.textContent = "Не удалось загрузить «" + p.file + "».";
-              pageImgFoot.hidden = false;
-              if (btnPickImage) btnPickImage.hidden = true;
-            }
-            setNavState();
-            updateEditToolbar();
-          };
-          pageImg.hidden = false;
-          pageImg.src = BOOK_PREFIX + p.file + "?v=" + String(++imageSrcNonce);
-          pageImg.alt = getPageTitle(p.file).trim() || p.file;
-          setNavState();
-          updateEditToolbar();
+          loadPageImageFor(p);
         }
       }
 
@@ -1126,6 +1626,12 @@
         var body = pageText.textContent.replace(/\u00a0/g, "");
         saveTextToDisk(file, body).then(
           function () {
+            var pg = manifest.pages[pageIndex];
+            if (pg && pg._newPage) delete pg._newPage;
+            pageText.textContent = body.length ? body : "\u00a0";
+            textSrcNonce++;
+            buildToc();
+            persistManifestToDisk().catch(function () {});
             flashSaved();
           },
           function () {}
@@ -1146,17 +1652,13 @@
         btnPickImage.addEventListener("click", function () {
           if (!isLocalServer() || pageIndex < 0 || !manifest.pages[pageIndex]) return;
           var pg = manifest.pages[pageIndex];
-          if (pg.kind !== "image" || !pg._newPage) return;
+          if (pg.kind !== "image") return;
+          if (pageImgFoot && pageImgFoot.hidden) return;
           inputImageFile.removeAttribute("data-replace-index");
           inputImageFile.accept = "image/png,.png";
           inputImageFile.click();
         });
         inputImageFile.addEventListener("change", function () {
-          window.removeEventListener("focus", tocPickerFocusHandler, true);
-          if (tocPickerTimer) {
-            window.clearTimeout(tocPickerTimer);
-            tocPickerTimer = null;
-          }
           var replaceIdx = -1;
           if (inputImageFile.hasAttribute("data-replace-index")) {
             replaceIdx = parseInt(inputImageFile.getAttribute("data-replace-index"), 10);
@@ -1183,17 +1685,35 @@
             var fname = n + ".png";
             manifest.pages.push({ file: fname, kind: "image", _newPage: true });
             buildToc();
+            saveManifestToLocalStorage();
             pageIndex = manifest.pages.length - 1;
+            rememberSavedPageImage(fname, picked);
             saveImageToDisk(fname, picked).then(
               function () {
                 inputImageFile.value = "";
-                renderPage();
-              },
-              function () {
-                manifest.pages.pop();
+                var np = manifest.pages[pageIndex];
+                if (np && np._newPage) delete np._newPage;
                 buildToc();
-                pageIndex = -1;
-                showToc();
+                persistManifestToDisk().catch(function () {});
+                renderPage();
+                flashSaved();
+              },
+              function (err) {
+                inputImageFile.value = "";
+                if (err && err.name === "AbortError") {
+                  window.alert(
+                    "Сохранение отменено. Страница «" +
+                      fname +
+                      "» создана — нажмите кнопку загрузки PNG на странице или снова выберите картинку в оглавлении."
+                  );
+                } else {
+                  window.alert(
+                    "Не удалось сохранить «" +
+                      fname +
+                      "». Укажите папку book проекта (c:\\Users\\jfeld\\tooo\\book) и повторите."
+                  );
+                }
+                renderPage();
               }
             );
             return;
@@ -1205,14 +1725,20 @@
             manifest.pages[replaceIdx].kind === "image"
           ) {
             var rfile = manifest.pages[replaceIdx].file;
+            rememberSavedPageImage(rfile, picked);
             saveImageToDisk(rfile, picked).then(
               function () {
                 inputImageFile.value = "";
                 pageIndex = replaceIdx;
+                persistManifestToDisk().catch(function () {});
                 renderPage();
                 flashSaved();
               },
-              function () {}
+              function () {
+                inputImageFile.value = "";
+                pageIndex = replaceIdx;
+                renderPage();
+              }
             );
             return;
           }
@@ -1221,19 +1747,24 @@
             return;
           }
           var pg = manifest.pages[pageIndex];
-          if (!pg || pg.kind !== "image" || !pg._newPage) {
+          if (!pg || pg.kind !== "image") {
             inputImageFile.value = "";
             return;
           }
+          rememberSavedPageImage(pg.file, picked);
           saveImageToDisk(pg.file, picked).then(
             function () {
               inputImageFile.value = "";
+              if (pg._newPage) delete pg._newPage;
+              buildToc();
+              persistManifestToDisk().catch(function () {});
               renderPage();
-              if (pageImgFoot) pageImgFoot.hidden = true;
-              if (btnPickImage) btnPickImage.hidden = true;
               flashSaved();
             },
-            function () {}
+            function () {
+              inputImageFile.value = "";
+              renderPage();
+            }
           );
         });
       }
@@ -1317,10 +1848,10 @@
         if (idx < 0 || !manifest.pages[idx]) return;
         var p = manifest.pages[idx];
         var raw = titleDialogInput.value.trim();
-        var prev = getPageTitle(p.file);
         titlesByFile[p.file] = raw;
         closeTitleDialog();
-        saveJsonToDisk("book-titles.json", collectTitlesPayload()).then(
+        saveTitlesToLocalStorage();
+        persistTitlesToDisk().then(
           function () {
             buildToc();
             if (!viewToc.hidden) {
@@ -1331,7 +1862,13 @@
             }
           },
           function () {
-            titlesByFile[p.file] = prev;
+            buildToc();
+            if (!viewToc.hidden) {
+              flashTocTitleSaved();
+            } else {
+              refreshPageLabel();
+              flashSaved();
+            }
           }
         );
       }
@@ -1370,11 +1907,30 @@
           if (!data || !Array.isArray(data.pages) || data.pages.length === 0) {
             throw new Error("empty book");
           }
-          manifest = data;
-          mergeTitlesFromJson(tdata);
-          buildToc();
-          showToc();
-          setNavState();
+          var lsManifest = loadManifestFromLocalStorage();
+          manifest = pickBestManifest(data, lsManifest, null);
+          titlesByFile = {};
+          mergeTitlesIntoStore(tdata);
+          loadTitlesFromLocalStorage();
+          function afterTitlesReady() {
+            buildToc();
+            showToc();
+            setNavState();
+          }
+          if (isLocalServer()) {
+            ensureBookDir()
+              .catch(function () {})
+              .then(function () {
+                return Promise.all([loadTitlesFromBookDir(), loadManifestFromBookDir()]);
+              })
+              .then(function (pair) {
+                var dirManifest = pair[1];
+                manifest = pickBestManifest(data, lsManifest, dirManifest);
+              })
+              .then(afterTitlesReady);
+          } else {
+            afterTitlesReady();
+          }
         })
         .catch(function () {
           showErr("Не найден book/book-manifest.json или книга пуста. Запустите build-book-manifest.ps1.");
