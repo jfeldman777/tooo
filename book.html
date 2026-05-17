@@ -158,6 +158,15 @@
       white-space: pre-wrap;
       word-break: break-word;
     }
+    #page-text a {
+      color: var(--accent);
+      font-weight: 600;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+    #page-text a:hover {
+      filter: brightness(1.12);
+    }
     #page-text-edit {
       width: 100%;
       max-width: 36rem;
@@ -437,7 +446,7 @@
       <div id="page-wrap">
         <div id="page-label"></div>
         <div id="page-body">
-          <pre id="page-text" hidden></pre>
+          <div id="page-text" hidden></div>
           <textarea id="page-text-edit" hidden spellcheck="true" rows="12"></textarea>
           <img id="page-img" alt="" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" hidden decoding="async">
           <div id="page-img-foot" hidden>
@@ -903,6 +912,27 @@
         });
       }
 
+      function getPageTextRaw(file) {
+        var c = textByFile[file];
+        return c == null ? "" : String(c);
+      }
+
+      function setPageTextDisplay(html) {
+        var t = html == null ? "" : String(html);
+        pageText.innerHTML = t.length ? t : "\u00a0";
+      }
+
+      function getPageTextForSave(file) {
+        if (editMode) {
+          return pageTextEdit.value.replace(/\u00a0/g, "");
+        }
+        var c = textByFile[file];
+        if (c != null && String(c).length) {
+          return String(c).replace(/\u00a0/g, "");
+        }
+        return pageText.innerHTML.replace(/\u00a0/g, "");
+      }
+
       function rememberSavedPageText(filename, text) {
         textByFile[filename] = text == null ? "" : String(text);
         if (!manifest || !manifest.pages) return;
@@ -1114,12 +1144,12 @@
         if (t.length) {
           if (p._newPage) delete p._newPage;
           textByFile[p.file] = t;
-          pageText.textContent = t;
+          setPageTextDisplay(t);
           pageText.hidden = false;
           return;
         }
         if (p._newPage) {
-          pageText.textContent = "";
+          setPageTextDisplay("");
           pageText.hidden = false;
           return;
         }
@@ -1175,8 +1205,11 @@
         if (manifest.pages[pageIndex].kind !== "text") return;
         var p = manifest.pages[pageIndex];
         editMode = true;
-        var val = pageText.textContent.replace(/\u00a0/g, "");
-        if (val.indexOf("(текст не найден") === 0) val = "";
+        var val = getPageTextRaw(p.file).replace(/\u00a0/g, "");
+        if (!val.length) {
+          val = pageText.textContent.replace(/\u00a0/g, "");
+          if (val.indexOf("(текст не найден") === 0) val = "";
+        }
         pageTextEdit.value = val;
         pageText.hidden = true;
         pageTextEdit.hidden = false;
@@ -1190,7 +1223,7 @@
               if (!t || !t.length) return;
               delete p._newPage;
               textByFile[p.file] = t;
-              pageText.textContent = t;
+              setPageTextDisplay(t);
               pageTextEdit.value = t;
             })
             .catch(function () {});
@@ -1199,7 +1232,11 @@
 
       function exitEditMode(syncToPre) {
         if (syncToPre && editMode) {
-          pageText.textContent = pageTextEdit.value.length ? pageTextEdit.value : "\u00a0";
+          var synced = pageTextEdit.value.length ? pageTextEdit.value : "";
+          if (manifest && pageIndex >= 0 && manifest.pages[pageIndex]) {
+            textByFile[manifest.pages[pageIndex].file] = synced;
+          }
+          setPageTextDisplay(synced);
         }
         editMode = false;
         pageTextEdit.hidden = true;
@@ -1608,7 +1645,9 @@
           enterEditMode();
         } else {
           editMode = false;
-          pageText.textContent = pageTextEdit.value.length ? pageTextEdit.value : "\u00a0";
+          var shown = pageTextEdit.value.length ? pageTextEdit.value : "";
+          textByFile[cur.file] = shown;
+          setPageTextDisplay(shown);
           pageTextEdit.hidden = true;
           pageText.hidden = false;
           pageBody.classList.add("page-body--center");
@@ -1620,16 +1659,17 @@
         if (!isLocalServer() || pageIndex < 0 || !manifest.pages[pageIndex] || manifest.pages[pageIndex].kind !== "text") {
           return;
         }
-        if (editMode) {
-          pageText.textContent = pageTextEdit.value.length ? pageTextEdit.value : "\u00a0";
-        }
         var file = manifest.pages[pageIndex].file;
-        var body = pageText.textContent.replace(/\u00a0/g, "");
+        var body = getPageTextForSave(file);
+        if (editMode) {
+          textByFile[file] = body;
+          setPageTextDisplay(body);
+        }
         saveTextToDisk(file, body).then(
           function () {
             var pg = manifest.pages[pageIndex];
             if (pg && pg._newPage) delete pg._newPage;
-            pageText.textContent = body.length ? body : "\u00a0";
+            setPageTextDisplay(body);
             textSrcNonce++;
             buildToc();
             persistManifestToDisk().catch(function () {});
