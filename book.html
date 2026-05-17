@@ -158,6 +158,34 @@
       white-space: pre-wrap;
       word-break: break-word;
     }
+    #page-text a {
+      color: var(--accent);
+      text-decoration: underline;
+    }
+    #page-text a:hover {
+      color: #fff;
+    }
+    .page-extra-link {
+      width: 100%;
+      max-width: 36rem;
+      margin: 0 auto 14px;
+      padding: 0 4px;
+      font-size: clamp(1rem, 3.8vw, 1.15rem);
+      line-height: 1.45;
+      text-align: center;
+      word-break: break-word;
+    }
+    .page-extra-link a {
+      display: inline-block;
+      padding: 10px 12px;
+      color: #fff;
+      background: var(--accent);
+      border-radius: 10px;
+      text-decoration: none;
+    }
+    .page-extra-link a:hover {
+      filter: brightness(1.08);
+    }
     #page-text-edit {
       width: 100%;
       max-width: 36rem;
@@ -438,6 +466,7 @@
         <div id="page-label"></div>
         <div id="page-body">
           <pre id="page-text" hidden></pre>
+          <div id="page-extra-link" class="page-extra-link" hidden></div>
           <textarea id="page-text-edit" hidden spellcheck="true" rows="12"></textarea>
           <img id="page-img" alt="" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" hidden decoding="async">
           <div id="page-img-foot" hidden>
@@ -485,8 +514,12 @@
       "use strict";
       var BOOK_PREFIX = "book/";
       var TITLES_JSON = "book/book-titles.json";
-      var TITLES_STORAGE_KEY = "book-titles-v1";
+      var TITLES_STORAGE_KEY = "book-titles-v2";
       var MANIFEST_STORAGE_KEY = "book-manifest-v1";
+      var FINAL_PAGE_FILE = "18.txt";
+      var FINAL_PAGE_TITLE = "Ссылка на Notion";
+      var FINAL_PAGE_LINK_URL =
+        "https://aromatic-keyboard-369.notion.site/36222db3cb0880d4b7eefaf33bd13d7c?source=copy_link";
       var IMAGE_IDB = "book-images-v1";
       var IMAGE_IDB_STORE = "blobs";
       var manifest = null;
@@ -506,6 +539,7 @@
       var pageLabel = document.getElementById("page-label");
       var pageBody = document.getElementById("page-body");
       var pageText = document.getElementById("page-text");
+      var pageExtraLink = document.getElementById("page-extra-link");
       var pageTextEdit = document.getElementById("page-text-edit");
       var pageImg = document.getElementById("page-img");
       var errEl = document.getElementById("err");
@@ -993,6 +1027,7 @@
       }
 
       function getPageTitle(file) {
+        if (String(file || "") === FINAL_PAGE_FILE) return FINAL_PAGE_TITLE;
         var v = titlesByFile[String(file || "")];
         if (v == null) return "";
         return String(v);
@@ -1109,24 +1144,65 @@
         pageLabel.textContent = formatPageLabel(pageIndex, manifest.pages[pageIndex]);
       }
 
+      function setPageTextDisplay(text) {
+        var t = text == null ? "" : String(text);
+        var urlRe = /https?:\/\/[^\s<>"']+/g;
+        var last = 0;
+        var m;
+        pageText.textContent = "";
+        while ((m = urlRe.exec(t)) !== null) {
+          if (m.index > last) {
+            pageText.appendChild(document.createTextNode(t.slice(last, m.index)));
+          }
+          var url = m[0];
+          var a = document.createElement("a");
+          a.href = url;
+          a.textContent = url;
+          a.target = "_blank";
+          a.rel = "noopener noreferrer";
+          pageText.appendChild(a);
+          last = m.index + url.length;
+        }
+        if (last < t.length) {
+          pageText.appendChild(document.createTextNode(t.slice(last)));
+        }
+      }
+
+      function updatePageExtraLink(p) {
+        if (!pageExtraLink) return;
+        pageExtraLink.textContent = "";
+        if (!p || p.file !== FINAL_PAGE_FILE) {
+          pageExtraLink.hidden = true;
+          return;
+        }
+        var a = document.createElement("a");
+        a.href = FINAL_PAGE_LINK_URL;
+        a.textContent = "Открыть ссылку в Notion";
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+        pageExtraLink.appendChild(a);
+        pageExtraLink.hidden = false;
+      }
+
       function applyLoadedPageText(p, text) {
         var t = text == null ? "" : String(text);
         if (t.length) {
           if (p._newPage) delete p._newPage;
           textByFile[p.file] = t;
-          pageText.textContent = t;
+          setPageTextDisplay(t);
           pageText.hidden = false;
           return;
         }
         if (p._newPage) {
-          pageText.textContent = "";
+          setPageTextDisplay("");
           pageText.hidden = false;
           return;
         }
-        pageText.textContent =
+        setPageTextDisplay(
           "(текст не найден: сохраните " +
           p.file +
-          " в папку book проекта и обновите страницу F5)";
+          " в папку book проекта и обновите страницу F5)"
+        );
         pageText.hidden = false;
       }
 
@@ -1190,7 +1266,7 @@
               if (!t || !t.length) return;
               delete p._newPage;
               textByFile[p.file] = t;
-              pageText.textContent = t;
+              setPageTextDisplay(t);
               pageTextEdit.value = t;
             })
             .catch(function () {});
@@ -1199,7 +1275,7 @@
 
       function exitEditMode(syncToPre) {
         if (syncToPre && editMode) {
-          pageText.textContent = pageTextEdit.value.length ? pageTextEdit.value : "\u00a0";
+          setPageTextDisplay(pageTextEdit.value.length ? pageTextEdit.value : "\u00a0");
         }
         editMode = false;
         pageTextEdit.hidden = true;
@@ -1470,6 +1546,7 @@
         pageText.textContent = "";
         pageText.hidden = true;
         pageTextEdit.value = "";
+        if (pageExtraLink) pageExtraLink.hidden = true;
         pageImg.hidden = true;
         pageImg.removeAttribute("src");
         if (manifest && manifest.pages && tocList) buildToc();
@@ -1498,10 +1575,12 @@
           if (pageImgFoot) pageImgFoot.hidden = true;
           if (btnPickImage) btnPickImage.hidden = true;
           if (inputImageFile) inputImageFile.value = "";
+          updatePageExtraLink(p);
           pageText.hidden = false;
           pageBody.classList.add("page-body--center");
           loadPageTextFor(p, ++pageTextLoadSeq, openAfter);
         } else {
+          updatePageExtraLink(null);
           pageText.hidden = true;
           pageText.textContent = "";
           pageTextEdit.value = "";
@@ -1608,7 +1687,7 @@
           enterEditMode();
         } else {
           editMode = false;
-          pageText.textContent = pageTextEdit.value.length ? pageTextEdit.value : "\u00a0";
+          setPageTextDisplay(pageTextEdit.value.length ? pageTextEdit.value : "\u00a0");
           pageTextEdit.hidden = true;
           pageText.hidden = false;
           pageBody.classList.add("page-body--center");
@@ -1621,7 +1700,7 @@
           return;
         }
         if (editMode) {
-          pageText.textContent = pageTextEdit.value.length ? pageTextEdit.value : "\u00a0";
+          setPageTextDisplay(pageTextEdit.value.length ? pageTextEdit.value : "\u00a0");
         }
         var file = manifest.pages[pageIndex].file;
         var body = pageText.textContent.replace(/\u00a0/g, "");
@@ -1629,7 +1708,7 @@
           function () {
             var pg = manifest.pages[pageIndex];
             if (pg && pg._newPage) delete pg._newPage;
-            pageText.textContent = body.length ? body : "\u00a0";
+            setPageTextDisplay(body.length ? body : "\u00a0");
             textSrcNonce++;
             buildToc();
             persistManifestToDisk().catch(function () {});
