@@ -158,6 +158,13 @@
       white-space: pre-wrap;
       word-break: break-word;
     }
+    #page-text a {
+      color: var(--accent);
+      text-decoration: underline;
+    }
+    #page-text a:hover {
+      color: #fff;
+    }
     #page-text-edit {
       width: 100%;
       max-width: 36rem;
@@ -1109,24 +1116,49 @@
         pageLabel.textContent = formatPageLabel(pageIndex, manifest.pages[pageIndex]);
       }
 
+      function setPageTextDisplay(text) {
+        var t = text == null ? "" : String(text);
+        var urlRe = /https?:\/\/[^\s<>"']+/g;
+        var last = 0;
+        var m;
+        pageText.textContent = "";
+        while ((m = urlRe.exec(t)) !== null) {
+          if (m.index > last) {
+            pageText.appendChild(document.createTextNode(t.slice(last, m.index)));
+          }
+          var url = m[0];
+          var a = document.createElement("a");
+          a.href = url;
+          a.textContent = url;
+          a.target = "_blank";
+          a.rel = "noopener noreferrer";
+          pageText.appendChild(a);
+          last = m.index + url.length;
+        }
+        if (last < t.length) {
+          pageText.appendChild(document.createTextNode(t.slice(last)));
+        }
+      }
+
       function applyLoadedPageText(p, text) {
         var t = text == null ? "" : String(text);
         if (t.length) {
           if (p._newPage) delete p._newPage;
           textByFile[p.file] = t;
-          pageText.textContent = t;
+          setPageTextDisplay(t);
           pageText.hidden = false;
           return;
         }
         if (p._newPage) {
-          pageText.textContent = "";
+          setPageTextDisplay("");
           pageText.hidden = false;
           return;
         }
-        pageText.textContent =
+        setPageTextDisplay(
           "(текст не найден: сохраните " +
           p.file +
-          " в папку book проекта и обновите страницу F5)";
+          " в папку book проекта и обновите страницу F5)"
+        );
         pageText.hidden = false;
       }
 
@@ -1190,7 +1222,7 @@
               if (!t || !t.length) return;
               delete p._newPage;
               textByFile[p.file] = t;
-              pageText.textContent = t;
+              setPageTextDisplay(t);
               pageTextEdit.value = t;
             })
             .catch(function () {});
@@ -1199,7 +1231,7 @@
 
       function exitEditMode(syncToPre) {
         if (syncToPre && editMode) {
-          pageText.textContent = pageTextEdit.value.length ? pageTextEdit.value : "\u00a0";
+          setPageTextDisplay(pageTextEdit.value.length ? pageTextEdit.value : "\u00a0");
         }
         editMode = false;
         pageTextEdit.hidden = true;
@@ -1608,7 +1640,7 @@
           enterEditMode();
         } else {
           editMode = false;
-          pageText.textContent = pageTextEdit.value.length ? pageTextEdit.value : "\u00a0";
+          setPageTextDisplay(pageTextEdit.value.length ? pageTextEdit.value : "\u00a0");
           pageTextEdit.hidden = true;
           pageText.hidden = false;
           pageBody.classList.add("page-body--center");
@@ -1621,7 +1653,7 @@
           return;
         }
         if (editMode) {
-          pageText.textContent = pageTextEdit.value.length ? pageTextEdit.value : "\u00a0";
+          setPageTextDisplay(pageTextEdit.value.length ? pageTextEdit.value : "\u00a0");
         }
         var file = manifest.pages[pageIndex].file;
         var body = pageText.textContent.replace(/\u00a0/g, "");
@@ -1629,7 +1661,7 @@
           function () {
             var pg = manifest.pages[pageIndex];
             if (pg && pg._newPage) delete pg._newPage;
-            pageText.textContent = body.length ? body : "\u00a0";
+            setPageTextDisplay(body.length ? body : "\u00a0");
             textSrcNonce++;
             buildToc();
             persistManifestToDisk().catch(function () {});
