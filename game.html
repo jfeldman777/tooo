@@ -460,6 +460,51 @@
       max-width: 480px;
       margin: 40px auto;
     }
+    .lang-switch {
+      position: fixed;
+      top: max(12px, env(safe-area-inset-top, 0px));
+      left: max(14px, env(safe-area-inset-left, 0px));
+      bottom: auto;
+      right: auto;
+      display: inline-flex;
+      border: 1px solid #cbd5e1;
+      border-radius: 999px;
+      overflow: hidden;
+      background: #fff;
+      z-index: 2147483647;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+    }
+    .lang-btn {
+      border: none;
+      background: transparent;
+      color: #1a1f28;
+      font-family: inherit;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      padding: 8px 14px;
+      cursor: pointer;
+      line-height: 1;
+    }
+    .lang-btn:hover {
+      background: #eef2f8;
+    }
+    .lang-btn.is-active {
+      background: #2563eb;
+      color: #fff;
+    }
+    .lang-btn.is-active:hover {
+      background: #2563eb;
+    }
+    @media (max-width: 720px) {
+      .lang-switch {
+        top: max(10px, env(safe-area-inset-top, 0px));
+      }
+      .lang-btn {
+        padding: 6px 10px;
+        font-size: 0.72rem;
+      }
+    }
     #help-fab {
       position: fixed;
       top: max(12px, env(safe-area-inset-top, 0px));
@@ -1092,19 +1137,23 @@
   </style>
 </head>
 <body>
+  <div class="lang-switch" role="group" aria-label="Language">
+    <button type="button" class="lang-btn is-active" data-lang-set="ru" aria-pressed="true">RU</button>
+    <button type="button" class="lang-btn" data-lang-set="en" aria-pressed="false">EN</button>
+  </div>
   <div id="no-data" class="empty-data" hidden>
-    <p>Нет данных для игры. Добавьте папку <code>pics</code> с подпапками-сериями; в каждой серии файлы
+    <p data-i18n="noData1">Нет данных для игры. Добавьте папку <code>pics</code> с подпапками-сериями; в каждой серии файлы
     <code>1.png</code> … <code>8.png</code> (класс = номер в имени). Имя папки = название набора в игре.</p>
-    <p>Запустите <code>build-game-data.ps1</code> или <code>launch.bat</code>. Старые <code>img_*</code> можно перенести скриптом <code>migrate-legacy-img-to-pics.ps1</code>.</p>
+    <p data-i18n="noData2">Запустите <code>build-game-data.ps1</code> или <code>launch.bat</code>. Старые <code>img_*</code> можно перенести скриптом <code>migrate-legacy-img-to-pics.ps1</code>.</p>
     <p>
-      <button type="button" class="js-open-briefing primary">Как мы измеряем сложность</button>
+      <button type="button" class="js-open-briefing primary" data-i18n="howMeasure">Как мы измеряем сложность</button>
     </p>
   </div>
   <main id="game-main" hidden>
     <div>
       <div class="meta game-stats" id="game-stats" aria-live="polite"></div>
       <div class="meta" id="level-meta"></div>
-      <div role="group" class="rows" id="rows" aria-label="Выбор строки или клавиши 1–8"></div>
+      <div role="group" class="rows" id="rows" data-i18n-aria="rowsAria" aria-label="Выбор строки или клавиши 1–8"></div>
     </div>
     <div id="stage">
       <div id="current-wrap">
@@ -1116,19 +1165,19 @@
   </main>
   <div id="overlay" hidden>
     <div class="modal" id="game-modal">
-      <h2 id="modal-title">Сообщение</h2>
+      <h2 id="modal-title" data-i18n="message">Сообщение</h2>
       <p id="modal-text"></p>
       <div id="modal-end-stats" class="modal-end-stats" hidden>
         <div class="end-stat">
-          <span class="end-stat-label">Заданий</span>
+          <span class="end-stat-label" data-i18n="tasks">Заданий</span>
           <span class="end-stat-value" id="modal-stat-tasks">0</span>
         </div>
         <div class="end-stat">
-          <span class="end-stat-label">Ошибок</span>
+          <span class="end-stat-label" data-i18n="errors">Ошибок</span>
           <span class="end-stat-value" id="modal-stat-errors">0</span>
         </div>
       </div>
-      <button type="button" class="primary" id="modal-btn">Далее</button>
+      <button type="button" class="primary" id="modal-btn" data-i18n="next">Далее</button>
     </div>
   </div>
 
@@ -1139,18 +1188,18 @@
       aria-modal="true"
       aria-labelledby="series-picker-title"
     >
-      <h2 id="series-picker-title">Серии</h2>
-      <p class="series-picker-hint">
+      <h2 id="series-picker-title" data-i18n="series">Серии</h2>
+      <p class="series-picker-hint" data-i18n="seriesHint">
         Нажмите название — игра только из этой серии (слов или картинок). Можно отметить галочками несколько серий
         в обоих разделах и нажать ОК — сначала пойдут выбранные словесные серии, затем картиночные.
       </p>
       <div id="series-picker-list" class="series-picker-list"></div>
       <div class="series-picker-footer">
-        <button type="button" class="series-picker-full" id="series-picker-full">
+        <button type="button" class="series-picker-full" id="series-picker-full" data-i18n="allSeries">
           Все серии и картинки
         </button>
-        <button type="button" class="series-footer-btn" id="series-picker-cancel">Отмена</button>
-        <button type="button" class="primary" id="series-picker-ok">ОК</button>
+        <button type="button" class="series-footer-btn" id="series-picker-cancel" data-i18n="cancel">Отмена</button>
+        <button type="button" class="primary" id="series-picker-ok" data-i18n="ok">ОК</button>
       </div>
     </div>
   </div>
@@ -1162,18 +1211,18 @@
       aria-modal="true"
       aria-labelledby="feedback-title"
     >
-      <h2 id="feedback-title">Написать автору</h2>
-      <p class="feedback-hint">
+      <h2 id="feedback-title" data-i18n="writeAuthor">Написать автору</h2>
+      <p class="feedback-hint" data-i18n="feedbackHint">
         Кнопка «Почта» откроет письмо на <strong>jfeldman777@gmail.com</strong> (или черновик на GitHub). Текст ниже
         попадёт в тело письма или в описание задачи.
       </p>
-      <label for="feedback-msg" class="feedback-label">Сообщение</label>
-      <textarea id="feedback-msg" maxlength="8000" placeholder="Текст сообщения…"></textarea>
+      <label for="feedback-msg" class="feedback-label" data-i18n="feedbackLabel">Сообщение</label>
+      <textarea id="feedback-msg" maxlength="8000" data-i18n-placeholder="feedbackPlaceholder" placeholder="Текст сообщения…"></textarea>
       <div class="feedback-actions">
-        <button type="button" class="secondary" id="feedback-close">Закрыть</button>
-        <button type="button" class="secondary" id="feedback-copy">Скопировать</button>
+        <button type="button" class="secondary" id="feedback-close" data-i18n="close">Закрыть</button>
+        <button type="button" class="secondary" id="feedback-copy" data-i18n="copy">Скопировать</button>
         <button type="button" class="secondary" id="feedback-github">GitHub</button>
-        <button type="button" class="primary btn-compact" id="feedback-mailto">Почта</button>
+        <button type="button" class="primary btn-compact" id="feedback-mailto" data-i18n="mail">Почта</button>
       </div>
     </div>
   </div>
@@ -1185,32 +1234,32 @@
       aria-modal="true"
       aria-labelledby="support-title"
     >
-      <h2 id="support-title" class="support-title">Поддержать автора</h2>
-      <p class="support-intro">
+      <h2 id="support-title" class="support-title" data-i18n="supportTitle">Поддержать автора</h2>
+      <p class="support-intro" data-i18n="supportIntro">
         Если вам понравились игры, вы можете поблагодарить автора — перечислить ему любую сумму. Спасибо, что играете.
       </p>
-      <p class="support-region-label">Для тех, кто в России</p>
+      <p class="support-region-label" data-i18n="supportRussia">Для тех, кто в России</p>
       <div class="support-card">
         <div class="support-card-head">Сбербанк</div>
-        <p class="support-card-line">Телефон для перевода (в т.ч. СБП):</p>
+        <p class="support-card-line" data-i18n="supportPhone">Телефон для перевода (в т.ч. СБП):</p>
         <p class="support-card-phone">
           <a href="tel:+79516746481">+7&nbsp;(951)&nbsp;674&#8209;64&#8209;81</a>
         </p>
-        <p class="support-card-line support-card-muted">Получатель: Яков Ф.</p>
+        <p class="support-card-line support-card-muted" data-i18n="supportPayee">Получатель: Яков Ф.</p>
       </div>
-      <p class="support-region-label">Для всех остальных</p>
+      <p class="support-region-label" data-i18n="supportOthers">Для всех остальных</p>
       <div class="support-card">
         <div class="support-card-head">PayPal</div>
-        <p class="support-card-line">Адрес получателя:</p>
+        <p class="support-card-line" data-i18n="supportPaypalAddr">Адрес получателя:</p>
         <p class="support-card-email">
           <a href="mailto:elenafeldman9@gmail.com">elenafeldman9@gmail.com</a>
         </p>
-        <p class="support-card-line support-card-muted">
+        <p class="support-card-line support-card-muted" data-i18n="supportPaypalHint">
           В приложении или на сайте PayPal укажите этот e-mail у получателя платежа.
         </p>
       </div>
       <div class="support-footer-actions">
-        <button type="button" class="secondary" id="support-close">Закрыть</button>
+        <button type="button" class="secondary" id="support-close" data-i18n="close">Закрыть</button>
       </div>
     </div>
   </div>
@@ -1218,6 +1267,8 @@
   <a
     href="book.html"
     id="book-fab"
+    data-i18n-aria="book"
+    data-i18n-title="book"
     aria-label="Книга"
     title="Книга"
   >
@@ -1229,6 +1280,8 @@
   <button
     type="button"
     id="series-fab"
+    data-i18n-aria="seriesList"
+    data-i18n-title="seriesFabTitle"
     aria-label="Список серий"
     title="Серии (слова и картинки)"
     hidden
@@ -1241,6 +1294,8 @@
   <button
     type="button"
     id="info-fab"
+    data-i18n-aria="summarize"
+    data-i18n-title="summarize"
     aria-label="Подвести итог"
     title="Подвести итог"
   >!</button>
@@ -1249,6 +1304,8 @@
     type="button"
     id="help-fab"
     class="help-fab js-open-briefing"
+    data-i18n-aria="howMeasure"
+    data-i18n-title="howMeasure"
     aria-label="Как мы измеряем сложность"
     title="Как мы измеряем сложность"
   >?</button>
@@ -1256,6 +1313,8 @@
   <button
     type="button"
     id="feedback-fab"
+    data-i18n-aria="writeAuthor"
+    data-i18n-title="feedbackFabTitle"
     aria-label="Написать автору"
     title="Форма обратной связи — написать автору"
   >
@@ -1270,6 +1329,8 @@
   <button
     type="button"
     id="donate-fab"
+    data-i18n-aria="donateAria"
+    data-i18n-title="donateTitle"
     aria-label="Поддержать автора — донат"
     title="Поддержать автора (Сбербанк, PayPal)"
   >
@@ -1281,10 +1342,16 @@
     </svg>
   </button>
 
-  <script src="game-data.js?v=1778730021"></script>
+  <script src="game-data.js?v=1778730022"></script>
+  <script src="i18n.js?v=1778730022"></script>
   <script>
     (function () {
       "use strict";
+
+      const I = window.toooI18n;
+      function t(key, vars) {
+        return I.t(key, vars);
+      }
 
       function shuffle(arr) {
         const a = arr.slice();
@@ -1339,6 +1406,13 @@
         });
       }
       wireHelpButtons();
+
+      document.querySelectorAll("[data-lang-set]").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          I.setLang(btn.getAttribute("data-lang-set"));
+        });
+      });
+      I.applyStatic();
 
       if (!Array.isArray(levels) || levels.length === 0) {
         noDataEl.hidden = false;
@@ -1484,20 +1558,22 @@
 
       function getWordSeriesLabel(i) {
         if (!getWordGroup(i)) return "";
-        const t = wordSeriesTitles[i];
-        if (t && String(t).trim()) return String(t).trim();
+        const title = wordSeriesTitles[i];
+        if (title && String(title).trim()) return String(title).trim();
         const wg = wordGroups[i];
         let hint = wg[0] ? String(wg[0]) : "";
         if (hint.length > 42) hint = hint.slice(0, 42) + "…";
-        return "Серия " + (i + 1) + (hint ? " — «" + hint + "»" : "");
+        return hint
+          ? t("seriesNHint", { n: i + 1, hint: hint })
+          : t("seriesN", { n: i + 1 });
       }
 
       function getPicSeriesLabel(li) {
         const lv = levels[li];
         if (!lv || !Array.isArray(lv.images) || lv.images.length === 0) return "";
         const id = lv.id != null ? String(lv.id).trim() : "";
-        if (id.length > 0) return id;
-        return "Набор " + (li + 1);
+        if (id.length > 0) return I.picSeriesLabel(id);
+        return t("setN", { n: li + 1 });
       }
 
       function updateSeriesFabVisibility() {
@@ -1515,7 +1591,7 @@
       }
 
       function loadWordsThenStart() {
-        fetch("txt2img/words.txt")
+        fetch(I.wordsUrl())
           .then(function (r) {
             if (!r.ok) {
               throw new Error("words");
@@ -1607,9 +1683,9 @@
 
       function updateGameStats() {
         const full =
-          "Заданий: " + tasksDone + " · Ошибок: " + mistakeCount;
+          t("tasks") + ": " + tasksDone + " · " + t("errors") + ": " + mistakeCount;
         const short =
-          "Зад.: " + tasksDone + " · Ош.: " + mistakeCount;
+          t("tasksShort") + ": " + tasksDone + " · " + t("errorsShort") + ": " + mistakeCount;
         gameStats.textContent = gameUiNarrow() ? short : full;
         gameStats.title = full;
       }
@@ -1697,7 +1773,7 @@
           slot.dataset.class = String(c);
           slot.setAttribute("role", "button");
           slot.setAttribute("tabindex", "0");
-          slot.setAttribute("aria-label", "Клавиша " + c);
+          slot.setAttribute("aria-label", t("keyN", { n: c }));
           const kbd = document.createElement("div");
           kbd.className = "kbd-visual";
           const keyCol = document.createElement("div");
@@ -1705,7 +1781,7 @@
           const keyImg = document.createElement("img");
           keyImg.className = "kbd-square";
           keyImg.src = squareIconSrc(c);
-          keyImg.alt = "Подсказка " + c;
+          keyImg.alt = t("hintN", { n: c });
           const keyNum = document.createElement("span");
           keyNum.className = "kbd-digit";
           keyNum.textContent = String(c);
@@ -1796,7 +1872,7 @@
         if (hasWords) {
           const hw = document.createElement("h3");
           hw.className = "series-picker-sub";
-          hw.textContent = "Словесные серии";
+          hw.textContent = t("wordSeries");
           frag.appendChild(hw);
           for (let i = 0; i < wordGroups.length; i++) {
             if (!getWordGroup(i)) continue;
@@ -1828,7 +1904,7 @@
         if (hasPics) {
           const hp = document.createElement("h3");
           hp.className = "series-picker-sub";
-          hp.textContent = "Картиночные серии";
+          hp.textContent = t("picSeries");
           frag.appendChild(hp);
           for (let li = 0; li < levels.length; li++) {
             const lv = levels[li];
@@ -1895,13 +1971,13 @@
       function showBriefingIntro(continueFn) {
         resetModalChrome();
         gameModal.classList.add("modal--briefing");
-        modalTitle.textContent = "Как мы измеряем сложность";
+        modalTitle.textContent = t("briefingTitle");
         modalText.innerHTML =
-          "<p>Мы с детства, сами того не замечая, делим ситуации на классы сложности. Этих классов восемь, и я обозначил их номерами и квадратами с пиктограммой.</p>" +
-          "<p>Ваша задача — отнести ситуацию на картинке к одному из классов; то же самое — с фразами и ключевыми словами. Выбрав класс слева, нажмите на клавишу.</p>";
+          "<p>" + escapeHtml(t("briefingP1")) + "</p>" +
+          "<p>" + escapeHtml(t("briefingP2")) + "</p>";
         modalText.hidden = false;
         modalEndStats.hidden = true;
-        modalBtn.textContent = "Понятно";
+        modalBtn.textContent = t("gotIt");
         modalBtn.onclick = function () {
           overlay.hidden = true;
           resetModalChrome();
@@ -1962,7 +2038,7 @@
         current = queue[0] || null;
         hideStageTextCard();
         currentImg.classList.remove("stage-txt");
-        const lm = "Набор: " + lv.id + " · картинок: " + lv.images.length;
+        const lm = t("setMeta", { id: lv.id, n: lv.images.length });
         levelMeta.textContent = lm;
         levelMeta.title = lm;
         showCurrent();
@@ -2034,8 +2110,8 @@
             "</div>";
           if (st.length > 0) {
             stageTextCard.innerHTML =
-              '<div class="stage-text-series">серия: ' +
-              escapeHtml(st) +
+              '<div class="stage-text-series">' +
+              escapeHtml(t("seriesColon", { name: st })) +
               "</div>" +
               wordHtml;
           } else {
@@ -2061,16 +2137,12 @@
         }
 
         if (reviewMode) {
-          levelMeta.textContent =
-            "Повтор ошибок · " +
-            (reviewIndex + 1) +
-            " из " +
-            reviewQueue.length;
+          levelMeta.textContent = t("reviewProg", {
+            cur: reviewIndex + 1,
+            total: reviewQueue.length,
+          });
         } else {
-          levelMeta.textContent =
-            "Шаг " +
-            (txtLabelIndex + 1) +
-            " из 8 — нажмите правильную клавишу";
+          levelMeta.textContent = t("stepProg", { cur: txtLabelIndex + 1 });
         }
       }
 
@@ -2090,7 +2162,7 @@
           mistakeCount += 1;
           recordCurrentMistake();
           updateGameStats();
-          feedback.textContent = "Не та клавиша — попробуйте ещё раз.";
+          feedback.textContent = t("wrongKey");
           feedback.className = "bad";
           flashRow(chosen, false);
           currentWrap.classList.remove("shake");
@@ -2099,7 +2171,7 @@
           return;
         }
 
-        feedback.textContent = "Верно!";
+        feedback.textContent = t("correct");
         feedback.className = "ok";
         flashRow(chosen, true);
 
@@ -2142,7 +2214,7 @@
 
         if (chosen === current.class) {
           busy = true;
-          feedback.textContent = "Верно!";
+          feedback.textContent = t("correct");
           feedback.className = "ok";
           flashRow(chosen, true);
 
@@ -2233,7 +2305,7 @@
           mistakeCount += 1;
           recordCurrentMistake();
           updateGameStats();
-          feedback.textContent = "Не та строка — попробуйте ещё раз.";
+          feedback.textContent = t("wrongRow");
           feedback.className = "bad";
           flashRow(chosen, false);
           currentWrap.classList.remove("shake");
@@ -2443,7 +2515,7 @@
         currentImg.classList.remove("stage-txt", "shrink-out", "pic-pending");
         currentWrap.hidden = true;
         gameModal.classList.add("modal--end");
-        modalTitle.textContent = "КОНЕЦ";
+        modalTitle.textContent = t("end");
         modalText.textContent = "";
         modalText.hidden = true;
         modalEndStats.hidden = false;
@@ -2462,7 +2534,7 @@
           errorsCard.classList.add("is-clickable", "is-zero");
           errorsCard.setAttribute("role", "button");
           errorsCard.setAttribute("tabindex", "0");
-          errorsCard.setAttribute("title", "Скачать log.txt");
+          errorsCard.setAttribute("title", t("downloadLog"));
           const onZero = function () {
             downloadErrorLog();
           };
@@ -2481,7 +2553,7 @@
           errorsCard.setAttribute("tabindex", "0");
           errorsCard.setAttribute(
             "title",
-            "Повторить случаи с ошибками (" + casesForReview.length + ")"
+            t("reviewErrors", { n: casesForReview.length })
           );
           const startReview = function () {
             startReviewSession(casesForReview);
@@ -2495,7 +2567,7 @@
           };
         }
 
-        modalBtn.textContent = "СНАЧАЛА";
+        modalBtn.textContent = t("again");
         modalBtn.classList.add("btn-compact");
         modalBtn.onclick = function () {
           overlay.hidden = true;
@@ -2578,9 +2650,7 @@
               }
             });
           if (wPicked.length === 0 && pPicked.length === 0) {
-            window.alert(
-              "Отметьте хотя бы одну серию (словесную или картиночную) или нажмите на название."
-            );
+            window.alert(t("pickSeries"));
             return;
           }
           if (wPicked.length > 0 && pPicked.length === 0) {
@@ -2614,8 +2684,12 @@
 
       function buildFeedbackBody() {
         var raw = feedbackMsg && feedbackMsg.value ? feedbackMsg.value.trim() : "";
-        var footer = "\n\n—\nСтраница: " + (typeof location !== "undefined" ? location.href : "");
-        return (raw || "(сообщение без текста)") + footer;
+        var footer =
+          "\n\n—\n" +
+          t("feedbackPage", {
+            page: typeof location !== "undefined" ? location.href : "",
+          });
+        return (raw || t("feedbackEmpty")) + footer;
       }
 
       function closeFeedbackModal() {
@@ -2669,31 +2743,32 @@
       }
       if (feedbackCopy) {
         feedbackCopy.addEventListener("click", function () {
-          var t = buildFeedbackBody();
+          var text = buildFeedbackBody();
           if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(t).then(
+            navigator.clipboard.writeText(text).then(
               function () {
-                window.alert("Текст скопирован в буфер обмена.");
+                window.alert(t("copied"));
               },
               function () {
-                window.alert(t);
+                window.alert(t("copyFail"));
+                window.prompt(t("copy"), text);
               }
             );
           } else {
-            window.prompt("Скопируйте текст (Ctrl+C):", t);
+            window.prompt(t("copy"), text);
           }
         });
       }
       if (feedbackGithub) {
         feedbackGithub.addEventListener("click", function () {
           var body = encodeURIComponent(buildFeedbackBody());
-          var title = encodeURIComponent("Игра tooo — обратная связь");
+          var title = encodeURIComponent(t("feedbackSubject"));
           window.open(FEEDBACK_GH_NEW_ISSUE + "?title=" + title + "&body=" + body, "_blank", "noopener,noreferrer");
         });
       }
       if (feedbackMailto) {
         feedbackMailto.addEventListener("click", function () {
-          var subj = encodeURIComponent("Игра tooo — обратная связь");
+          var subj = encodeURIComponent(t("feedbackSubject"));
           var body = encodeURIComponent(buildFeedbackBody());
           window.location.href = "mailto:" + FEEDBACK_TO + "?subject=" + subj + "&body=" + body;
         });
@@ -2721,6 +2796,11 @@
           showGameEndKonets();
         });
       }
+
+      window.toooOnLangChange = function () {
+        I.applyStatic();
+        loadWordsThenStart();
+      };
 
       loadWordsThenStart();
     })();

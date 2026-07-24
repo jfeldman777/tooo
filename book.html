@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <link rel="icon" href="favicon.svg" type="image/svg+xml" sizes="any">
-  <title>Книга</title>
+  <title data-i18n="bookPageTitle">Книга</title>
   <style>
     :root {
       --bg: #0f1114;
@@ -411,26 +411,66 @@
     .title-dialog-btn:hover {
       filter: brightness(1.08);
     }
+    .lang-switch {
+      position: fixed;
+      top: max(6px, env(safe-area-inset-top, 0px));
+      left: max(8px, env(safe-area-inset-left, 0px));
+      bottom: auto;
+      right: auto;
+      display: inline-flex;
+      border: 1px solid #cbd5e1;
+      border-radius: 999px;
+      overflow: hidden;
+      background: #fff;
+      z-index: 2147483647;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+    }
+    .lang-btn {
+      border: none;
+      background: transparent;
+      color: #1a1f28;
+      font-family: inherit;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      padding: 6px 11px;
+      cursor: pointer;
+      line-height: 1;
+    }
+    .lang-btn:hover {
+      background: #eef2f8;
+    }
+    .lang-btn.is-active {
+      background: #2563eb;
+      color: #fff;
+    }
+    .lang-btn.is-active:hover {
+      background: #2563eb;
+    }
   </style>
 </head>
 <body>
+  <div class="lang-switch" role="group" aria-label="Language">
+    <button type="button" class="lang-btn" data-lang-set="ru" aria-pressed="false">RU</button>
+    <button type="button" class="lang-btn" data-lang-set="en" aria-pressed="false">EN</button>
+  </div>
   <div id="edit-toolbar" role="toolbar" hidden aria-label="Редактирование (только локальный сервер)">
-    <button type="button" id="btn-edit" aria-label="Редактировать" title="Редактировать">
+    <button type="button" id="btn-edit" data-i18n-aria="edit" data-i18n-title="edit" aria-label="Редактировать" title="Редактировать">
       <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
         <path fill="currentColor" d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
       </svg>
     </button>
-    <button type="button" id="btn-save" aria-label="Сохранить" title="Сохранить">
+    <button type="button" id="btn-save" data-i18n-aria="save" data-i18n-title="save" aria-label="Сохранить" title="Сохранить">
       <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
         <path fill="currentColor" d="M17 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7l-4-4zm-5 16a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm3-10H5V5h10v4z"/>
       </svg>
     </button>
-    <button type="button" id="btn-new-txt" hidden aria-label="Новая текстовая страница" title="Новая текстовая страница — пустое поле">
+    <button type="button" id="btn-new-txt" hidden data-i18n-aria="newTxt" data-i18n-title="newTxt" aria-label="Новая текстовая страница" title="Новая текстовая страница — пустое поле">
       <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
         <path fill="currentColor" d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm4 18H6V4h7v5h5v11zM8 12h8v2H8v-2zm0 4h5v2H8v-2z"/>
       </svg>
     </button>
-    <button type="button" id="btn-new-img" hidden aria-label="Новая картинка PNG" title="Выбрать PNG с компьютера">
+    <button type="button" id="btn-new-img" hidden data-i18n-aria="newImg" data-i18n-title="newImg" aria-label="Новая картинка PNG" title="Выбрать PNG с компьютера">
       <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
         <path fill="currentColor" d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5zM9.5 8a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3z"/>
       </svg>
@@ -438,8 +478,8 @@
   </div>
   <div id="app">
     <div id="view-toc" hidden>
-      <h1>Оглавление</h1>
-      <p id="toc-title-hint" class="toc-hint" hidden>В каждой строке кнопка с «T» — титул (<code>book/book-titles.json</code>). При первом сохранении выберите папку <code>book</code> проекта; заголовки дублируются в браузере и не пропадут после F5.</p>
+      <h1 data-i18n="toc">Оглавление</h1>
+      <p id="toc-title-hint" class="toc-hint" data-i18n-html="tocHint" hidden>В каждой строке кнопка с «T» — титул (<code>book/book-titles.json</code>). При первом сохранении выберите папку <code>book</code> проекта; заголовки дублируются в браузере и не пропадут после F5.</p>
       <ul id="toc-list"></ul>
     </div>
     <div id="view-page" hidden>
@@ -451,7 +491,7 @@
           <img id="page-img" alt="" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" hidden decoding="async">
           <div id="page-img-foot" hidden>
             <p id="page-img-missing" class="page-img-missing"></p>
-            <button type="button" id="btn-pick-image" hidden aria-label="Выбрать PNG" title="Выбрать PNG">
+            <button type="button" id="btn-pick-image" hidden data-i18n-aria="pickPng" data-i18n-title="pickPng" aria-label="Выбрать PNG" title="Выбрать PNG">
               <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                 <path fill="currentColor" d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z"/>
               </svg>
@@ -466,35 +506,38 @@
   <div id="title-dialog" class="title-dialog" hidden aria-modal="true" role="dialog" aria-labelledby="title-dialog-h">
     <div class="title-dialog-backdrop" id="title-dialog-backdrop"></div>
     <div class="title-dialog-panel">
-      <h2 id="title-dialog-h" class="title-dialog-heading">Титул страницы</h2>
+      <h2 id="title-dialog-h" class="title-dialog-heading" data-i18n="pageTitleDialog">Титул страницы</h2>
       <p class="title-dialog-sub" id="title-dialog-filename"></p>
       <input type="text" id="title-dialog-input" class="title-dialog-input" maxlength="240" autocomplete="off">
       <div class="title-dialog-actions">
-        <button type="button" class="title-dialog-btn title-dialog-btn--primary" id="title-dialog-save">Сохранить</button>
-        <button type="button" class="title-dialog-btn" id="title-dialog-cancel">Отмена</button>
+        <button type="button" class="title-dialog-btn title-dialog-btn--primary" id="title-dialog-save" data-i18n="save">Сохранить</button>
+        <button type="button" class="title-dialog-btn" id="title-dialog-cancel" data-i18n="cancel">Отмена</button>
       </div>
     </div>
   </div>
   <nav class="nav" aria-label="Навигация по книге">
-    <button type="button" id="btn-back" title="Назад" aria-label="Назад">
+    <button type="button" id="btn-back" data-i18n-title="back" data-i18n-aria="back" title="Назад" aria-label="Назад">
       <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
     </button>
-    <button type="button" id="btn-fwd" title="Вперёд" aria-label="Вперёд">
+    <button type="button" id="btn-fwd" data-i18n-title="forward" data-i18n-aria="forward" title="Вперёд" aria-label="Вперёд">
       <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8-8-8z"/></svg>
     </button>
-    <button type="button" id="btn-toc" title="К оглавлению" aria-label="К оглавлению">
+    <button type="button" id="btn-toc" data-i18n-title="toToc" data-i18n-aria="toToc" title="К оглавлению" aria-label="К оглавлению">
       <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M3 6h18v2H3V6zm0 5h18v2H3v-2zm0 5h18v2H3v-2z"/></svg>
     </button>
-    <button type="button" class="nav-primary" id="btn-game" title="К игре" aria-label="К игре">
+    <button type="button" class="nav-primary" id="btn-game" data-i18n-title="toGame" data-i18n-aria="toGame" title="К игре" aria-label="К игре">
       <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M8 5v14l11-7-11-7z"/></svg>
     </button>
   </nav>
+  <script src="i18n.js?v=1"></script>
   <script>
     (function () {
       "use strict";
+      var I = window.toooI18n;
+      function t(key, vars) {
+        return I.t(key, vars);
+      }
       var BOOK_PREFIX = "book/";
-      var TITLES_JSON = "book/book-titles.json";
-      var TITLES_STORAGE_KEY = "book-titles-v1";
       var MANIFEST_STORAGE_KEY = "book-manifest-v1";
       var IMAGE_IDB = "book-images-v1";
       var IMAGE_IDB_STORE = "blobs";
@@ -951,29 +994,41 @@
       }
 
       function loadPageTextFor(p, loadSeq, openAfter) {
-        function finish(t) {
+        function finish(txt) {
           if (loadSeq !== pageTextLoadSeq) return;
-          applyLoadedPageText(p, t);
+          applyLoadedPageText(p, txt);
           if (openAfter) enterEditMode();
           setNavState();
           updateEditToolbar();
         }
 
-        var httpP = fetch(BOOK_PREFIX + p.file + "?v=" + String(++textSrcNonce), { cache: "no-store" })
+        var nonce = String(++textSrcNonce);
+        var httpP = fetch(bookTextUrl(p.file) + "?v=" + nonce, { cache: "no-store" })
           .then(function (r) {
-            if (!r.ok) {
-              if (p._newPage && r.status === 404) return "";
-              throw new Error(String(r.status));
+            if (r.ok) return r.text();
+            if (isEnLang() && /\.txt$/i.test(String(p.file || "")) && r.status === 404) {
+              return fetch(BOOK_PREFIX + p.file + "?v=" + nonce, { cache: "no-store" }).then(function (r2) {
+                if (!r2.ok) {
+                  if (p._newPage && r2.status === 404) return "";
+                  throw new Error(String(r2.status));
+                }
+                return r2.text();
+              });
             }
-            return r.text();
+            if (p._newPage && r.status === 404) return "";
+            throw new Error(String(r.status));
           })
           .catch(function () {
             return "";
           });
 
-        var dirP = readBookFileText(p.file).catch(function () {
-          return "";
-        });
+        // Локальная папка book (File System Access API) хранит только RU-версию —
+        // для EN её не подмешиваем, чтобы не перекрыть загруженный английский текст.
+        var dirP = isEnLang()
+          ? Promise.resolve("")
+          : readBookFileText(p.file).catch(function () {
+              return "";
+            });
 
         Promise.all([httpP, dirP]).then(function (pair) {
           return pickBestPageText(p.file, pair[0], pair[1]);
@@ -1028,6 +1083,26 @@
         return String(v);
       }
 
+      function isEnLang() {
+        return I.getLang() === "en";
+      }
+
+      function titlesJsonUrl() {
+        return isEnLang() ? "book/book-titles.en.json" : "book/book-titles.json";
+      }
+
+      function titlesFileName() {
+        return isEnLang() ? "book-titles.en.json" : "book-titles.json";
+      }
+
+      function titlesStorageKey() {
+        return isEnLang() ? "book-titles-v1-en" : "book-titles-v1";
+      }
+
+      function bookTextUrl(file) {
+        return isEnLang() && /\.txt$/i.test(String(file || "")) ? "book/en/" + file : BOOK_PREFIX + file;
+      }
+
       function mergeTitlesIntoStore(tdata) {
         if (!tdata || !tdata.byFile || typeof tdata.byFile !== "object") return;
         Object.keys(tdata.byFile).forEach(function (k) {
@@ -1042,19 +1117,19 @@
 
       function loadTitlesFromLocalStorage() {
         try {
-          var raw = localStorage.getItem(TITLES_STORAGE_KEY);
+          var raw = localStorage.getItem(titlesStorageKey());
           if (raw) mergeTitlesIntoStore(JSON.parse(raw));
         } catch (e) {}
       }
 
       function saveTitlesToLocalStorage() {
         try {
-          localStorage.setItem(TITLES_STORAGE_KEY, JSON.stringify(collectTitlesPayload()));
+          localStorage.setItem(titlesStorageKey(), JSON.stringify(collectTitlesPayload()));
         } catch (e) {}
       }
 
       function loadTitlesFromBookDir() {
-        return readBookFileText("book-titles.json")
+        return readBookFileText(titlesFileName())
           .then(function (text) {
             if (!text || !text.length) return;
             try {
@@ -1127,10 +1202,11 @@
         var payload = collectTitlesPayload();
         saveTitlesToLocalStorage();
         if (!isLocalServer()) return Promise.resolve();
+        var fname = titlesFileName();
         var text = JSON.stringify(payload, null, 2);
         var blob = new Blob([text], { type: "application/json;charset=utf-8" });
-        return writeBookFile("book-titles.json", blob).catch(function () {
-          return saveJsonToDiskWithPicker("book-titles.json", payload);
+        return writeBookFile(fname, blob).catch(function () {
+          return saveJsonToDiskWithPicker(fname, payload);
         });
       }
 
@@ -1322,7 +1398,7 @@
         btnSave.hidden = false;
         btnEdit.hidden = false;
         btnEdit.disabled = false;
-        btnEdit.title = "Редактировать";
+        btnEdit.title = t("edit");
         if (!editMode) {
           pageText.hidden = false;
           pageTextEdit.hidden = true;
@@ -1833,7 +1909,7 @@
         showToc();
       });
       btnGame.addEventListener("click", function () {
-        window.location.href = "game.html";
+        window.location.href = "game.html?lang=" + I.getLang();
       });
 
       function flashTocTitleSaved() {
@@ -1929,12 +2005,52 @@
         });
       }
 
+      document.querySelectorAll("[data-lang-set]").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          I.setLang(btn.getAttribute("data-lang-set"));
+        });
+      });
+      I.applyStatic();
+
+      function reloadTitlesForLang() {
+        titlesByFile = {};
+        return fetch(titlesJsonUrl(), { cache: "no-store" })
+          .then(function (r) {
+            return r.ok ? r.json() : {};
+          })
+          .catch(function () {
+            return {};
+          })
+          .then(function (tdata) {
+            mergeTitlesIntoStore(tdata);
+            loadTitlesFromLocalStorage();
+            if (!isLocalServer()) return;
+            return loadTitlesFromBookDir().catch(function () {});
+          });
+      }
+
+      window.toooOnLangChange = function () {
+        I.applyStatic();
+        Object.keys(textByFile).forEach(function (k) {
+          if (/\.txt$/i.test(k)) delete textByFile[k];
+        });
+        reloadTitlesForLang().then(function () {
+          if (!manifest || !manifest.pages) return;
+          buildToc();
+          if (pageIndex >= 0 && manifest.pages[pageIndex]) {
+            renderPage();
+          } else {
+            showToc();
+          }
+        });
+      };
+
       Promise.all([
         fetch("book/book-manifest.json", { cache: "no-store" }).then(function (r) {
           if (!r.ok) throw new Error("manifest " + r.status);
           return r.json();
         }),
-        fetch(TITLES_JSON, { cache: "no-store" })
+        fetch(titlesJsonUrl(), { cache: "no-store" })
           .then(function (r) {
             return r.ok ? r.json() : {};
           })

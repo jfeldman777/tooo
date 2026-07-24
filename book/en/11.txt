@@ -1,0 +1,21 @@
+Now I will try to show that arithmetic relates to algebra as one process relates to a family of processes.
+Here is an arithmetic problem with a solution.
+There was an unknown number (of apples); five more were brought, and there were ten. How many apples were there at the start.
+Arithmetic solution. We have two addends and a sum. To find the unknown addend, subtract the known addend from the sum.
+From 10 subtract 5 and get 5 (apples)
+Algebraic solution.
+There were x apples; five more were brought — there were 10.
+We write the equation
+x + 5 = 10
+
+What is the meaning of this equation?
+We go through the natural numbers (1, 2, ...)
+and substitute into the left side.
+1+5 = 6
+2+5 = 7
+3+5 = 8
+4+5 = 9
+5+5 = 10 Stop!
+The original amount is 5.
+That is, behind one equation stands a family of numerical statements, almost all of them false, only one true — and you must find it.
+But if you do not picture the family of relations — the whole procedure loses its meaning.

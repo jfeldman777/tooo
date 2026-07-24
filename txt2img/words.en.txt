@@ -1,0 +1,83 @@
+{one object,
+many objects, one process, many processes,
+one map, many maps, one system, many systems
+(basic scale–physics)
+},
+
+{one point, many points, one line, many lines,
+one plane, many planes,
+one space, many spaces (basic scale–geometry)
+},
+{idée fixe,
+field behavior,
+struggle for power,
+rules,
+freedom,
+logic,
+genius,
+sage
+(basic scale–function)
+},
+{what?, where?, when?, how?, who?, why?, what if?, what for? (thinking–questions)},
+{thing–name,
+ space–boundary,
+ time–motion,
+ role–method, chance–chaos, cause–effect,
+genius–discovery, accounting for all interests–accounting for distant consequences
+(thinking–categories)
+},
+{recognition–naming,
+ distinction–demarcation,
+  ordering–limit transition,
+   series–parallels,choice–risk, doubt–proof,
+   anomaly–paradox, harmony–balance
+   
+   (thinking–operations)
+   },
+{
+magical, ethical, aesthetic,
+role-based, free, theoretical, paradoxical, universal
+(consciousness–type)
+},
+
+{miracle–mystery,good–evil,beauty–ugliness,
+lawfulness–indifference
+,activity–passivity,truth–lie,new–old,
+harmony–cacophony (consciousness–poles)
+}
+,
+{
+   attachment,
+   family,
+   struggle,
+   mission,
+   free will,
+   justification,
+   originality, wisdom
+   (interaction–type)},
+
+{
+   isolation–meditation,
+   us–them,
+   dominance–submission,
+compliance–violation,
+initiative–waiting,
+logic–chaos,
+genius–banality,
+unity–incoherence
+
+   (interaction–poles)}
+
+{
+   hunter–gatherers,
+   agrarian communities, ancient empires, Middle Ages, Renaissance–Reformation,
+   industrial age, 20th century, our time
+   (historical eras)}
+,{
+soldier, student, officer, teacher, general, textbook author,
+inventor, moderator–universal   
+   (roles)}
+,{
+   slave, peasant, noble, priest, merchant,
+   lawyer, jester, saint
+   (estates)}
