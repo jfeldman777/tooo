@@ -59,6 +59,7 @@
       feedbackFabTitle: "Форма обратной связи — написать автору",
       donateAria: "Поддержать автора — донат",
       donateTitle: "Поддержать автора (Сбербанк, PayPal)",
+      backToDiscourse: "Назад к Дискурсу",
       wordSeries: "Словесные серии",
       picSeries: "Картиночные серии",
       seriesN: "Серия {n}",
@@ -149,6 +150,7 @@
       feedbackFabTitle: "Feedback form — write to the author",
       donateAria: "Support the author — donate",
       donateTitle: "Support the author (Sberbank, PayPal)",
+      backToDiscourse: "Back to Discourse",
       wordSeries: "Word series",
       picSeries: "Picture series",
       seriesN: "Series {n}",
@@ -249,6 +251,12 @@
     return currentLang === "en" ? base + "?lang=en" : base + "?lang=ru";
   }
 
+  function discourseUrl() {
+    return currentLang === "en"
+      ? "https://jfeldman777.github.io/gala/en.html?p=3.7"
+      : "https://jfeldman777.github.io/gala/index.html?p=3.7";
+  }
+
   function applyStatic() {
     document.title = t("pageTitle");
     document.querySelectorAll("[data-i18n]").forEach(function (el) {
@@ -278,6 +286,8 @@
     });
     const bookFab = document.getElementById("book-fab");
     if (bookFab) bookFab.href = bookUrl();
+    const discourseFab = document.getElementById("discourse-fab");
+    if (discourseFab) discourseFab.href = discourseUrl();
   }
 
   global.toooI18n = {
@@ -290,6 +300,7 @@
     picSeriesLabel: picSeriesLabel,
     wordsUrl: wordsUrl,
     bookUrl: bookUrl,
+    discourseUrl: discourseUrl,
     LANG_KEY: LANG_KEY,
   };
 
