@@ -460,6 +460,57 @@
       max-width: 480px;
       margin: 40px auto;
     }
+    #discourse-fab {
+      position: fixed;
+      top: max(12px, env(safe-area-inset-top, 0px));
+      left: max(14px, env(safe-area-inset-left, 0px));
+      bottom: auto;
+      right: auto;
+      z-index: 2147483647;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      border: 3px solid #fff;
+      background: linear-gradient(180deg, #2dd4bf 0%, #0f766e 100%);
+      color: #fff;
+      font-family: inherit;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.08);
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      -webkit-user-select: none;
+      user-select: none;
+      box-sizing: border-box;
+      isolation: isolate;
+      -webkit-tap-highlight-color: transparent;
+    }
+    #discourse-fab:hover {
+      border-color: var(--accent);
+      color: #fff;
+    }
+    #discourse-fab:active {
+      transform: scale(0.96);
+    }
+    #discourse-fab svg {
+      width: 22px;
+      height: 22px;
+      display: block;
+    }
+    @media (max-width: 720px) {
+      #discourse-fab {
+        top: max(10px, env(safe-area-inset-top, 0px));
+        left: max(12px, env(safe-area-inset-left, 0px));
+        width: 44px;
+        height: 44px;
+      }
+      #discourse-fab svg {
+        width: 18px;
+        height: 18px;
+      }
+    }
     #help-fab {
       position: fixed;
       top: max(12px, env(safe-area-inset-top, 0px));
@@ -1092,6 +1143,31 @@
   </style>
 </head>
 <body>
+  <a
+    id="discourse-fab"
+    href="https://jfeldman777.github.io/gala/index.html?p=3.7"
+    aria-label="Назад к Дискурсу"
+    title="Назад к Дискурсу"
+  >
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        d="M12 5.2c-1.6-1-3.7-1.6-6.2-1.6v12.2c2.5 0 4.6.6 6.2 1.6 1.6-1 3.7-1.6 6.2-1.6V3.6c-2.5 0-4.6.6-6.2 1.6z"
+      />
+      <path
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        d="M12 5.2v12.2M5.8 3.6v12.2M18.2 3.6v12.2"
+      />
+    </svg>
+  </a>
   <div id="no-data" class="empty-data" hidden>
     <p>Нет данных для игры. Добавьте папку <code>pics</code> с подпапками-сериями; в каждой серии файлы
     <code>1.png</code> … <code>8.png</code> (класс = номер в имени). Имя папки = название набора в игре.</p>
