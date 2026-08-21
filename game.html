@@ -130,6 +130,39 @@
     body.browse-mode .game-stats {
       display: none;
     }
+    @media (max-width: 720px) {
+      body.browse-mode .kbd-digit {
+        display: none !important;
+      }
+      body.browse-mode .kbd-visual {
+        border: none;
+        background: transparent;
+        box-shadow: none;
+        padding: 0;
+        max-width: none;
+      }
+      body.browse-mode .thumbs {
+        display: none !important;
+      }
+      body.browse-mode .row-slot {
+        align-items: center;
+        justify-content: flex-start;
+        padding: 4px 6px;
+        gap: 0;
+        width: fit-content;
+        max-width: 100%;
+      }
+      body.browse-mode .rows {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 6px;
+        align-items: center;
+      }
+      body.browse-mode .kbd-square {
+        width: 40px;
+        height: 40px;
+      }
+    }
     .kbd-visual {
       display: inline-flex;
       flex-direction: row;
