@@ -80,6 +80,56 @@
     .row-slot.flash-bad {
       outline: 2px solid var(--bad);
     }
+    .row-slot.is-browse-active {
+      border-color: var(--accent);
+      background: rgba(91, 140, 222, 0.14);
+      outline: 2px solid rgba(91, 140, 222, 0.45);
+    }
+    #browse-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px 10px;
+      margin-bottom: 10px;
+    }
+    #browse-bar[hidden] {
+      display: none !important;
+    }
+    #browse-bar label {
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin: 0;
+    }
+    #browse-table {
+      flex: 1 1 160px;
+      min-width: 0;
+      max-width: 100%;
+      font-family: inherit;
+      font-size: 0.9rem;
+      color: var(--text);
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px 10px;
+    }
+    #browse-exit {
+      font-family: inherit;
+      font-size: 0.82rem;
+      font-weight: 600;
+      padding: 8px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      color: var(--text);
+      cursor: pointer;
+    }
+    #browse-exit:hover {
+      border-color: var(--accent);
+      color: #fff;
+    }
+    body.browse-mode .game-stats {
+      display: none;
+    }
     .kbd-visual {
       display: inline-flex;
       flex-direction: row;
@@ -662,6 +712,46 @@
     #series-fab[hidden] {
       display: none !important;
     }
+    #browse-fab {
+      position: fixed;
+      top: max(12px, env(safe-area-inset-top, 0px));
+      right: calc(max(14px, env(safe-area-inset-right, 0px)) + 240px);
+      bottom: auto;
+      left: auto;
+      z-index: 2147483647;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      border: 3px solid #fff;
+      background: linear-gradient(180deg, #5b8cde 0%, #2d5a9e 100%);
+      color: #fff;
+      font-family: inherit;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.08);
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      -webkit-user-select: none;
+      user-select: none;
+      box-sizing: border-box;
+      isolation: isolate;
+      -webkit-tap-highlight-color: transparent;
+    }
+    #browse-fab:hover {
+      border-color: var(--accent);
+      color: #fff;
+    }
+    #browse-fab:active {
+      transform: scale(0.96);
+    }
+    #browse-fab[hidden] {
+      display: none !important;
+    }
+    #browse-fab.is-active {
+      border-color: #f0c674;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45), 0 0 0 2px rgba(240, 198, 116, 0.35);
+    }
     #book-fab {
       position: fixed;
       top: max(12px, env(safe-area-inset-top, 0px));
@@ -699,7 +789,7 @@
     #feedback-fab {
       position: fixed;
       top: max(12px, env(safe-area-inset-top, 0px));
-      right: calc(max(14px, env(safe-area-inset-right, 0px)) + 240px);
+      right: calc(max(14px, env(safe-area-inset-right, 0px)) + 300px);
       bottom: auto;
       left: auto;
       z-index: 2147483647;
@@ -732,7 +822,7 @@
     #donate-fab {
       position: fixed;
       top: max(12px, env(safe-area-inset-top, 0px));
-      right: calc(max(14px, env(safe-area-inset-right, 0px)) + 300px);
+      right: calc(max(14px, env(safe-area-inset-right, 0px)) + 360px);
       bottom: auto;
       left: auto;
       z-index: 2147483647;
@@ -767,6 +857,7 @@
       #help-fab,
       #info-fab,
       #series-fab,
+      #browse-fab,
       #book-fab,
       #feedback-fab,
       #donate-fab {
@@ -783,44 +874,92 @@
       #series-fab {
         top: calc(max(10px, env(safe-area-inset-top, 0px)) + var(--fab-size) + var(--fab-gap));
       }
-      #info-fab {
+      #browse-fab {
         top: calc(
           max(10px, env(safe-area-inset-top, 0px)) + 2 * (var(--fab-size) + var(--fab-gap))
         );
       }
-      #help-fab {
+      #info-fab {
         top: calc(
           max(10px, env(safe-area-inset-top, 0px)) + 3 * (var(--fab-size) + var(--fab-gap))
+        );
+      }
+      #help-fab {
+        top: calc(
+          max(10px, env(safe-area-inset-top, 0px)) + 4 * (var(--fab-size) + var(--fab-gap))
         );
         font-size: 1.2rem;
       }
       #feedback-fab {
         top: calc(
-          max(10px, env(safe-area-inset-top, 0px)) + 4 * (var(--fab-size) + var(--fab-gap))
+          max(10px, env(safe-area-inset-top, 0px)) + 5 * (var(--fab-size) + var(--fab-gap))
         );
       }
       #donate-fab {
         top: calc(
-          max(10px, env(safe-area-inset-top, 0px)) + 5 * (var(--fab-size) + var(--fab-gap))
+          max(10px, env(safe-area-inset-top, 0px)) + 6 * (var(--fab-size) + var(--fab-gap))
         );
       }
       body:has(#series-fab[hidden]) #book-fab {
         top: max(10px, env(safe-area-inset-top, 0px));
       }
-      body:has(#series-fab[hidden]) #info-fab {
+      body:has(#series-fab[hidden]) #browse-fab {
         top: calc(max(10px, env(safe-area-inset-top, 0px)) + var(--fab-size) + var(--fab-gap));
       }
-      body:has(#series-fab[hidden]) #help-fab {
+      body:has(#series-fab[hidden]) #info-fab {
         top: calc(
           max(10px, env(safe-area-inset-top, 0px)) + 2 * (var(--fab-size) + var(--fab-gap))
         );
       }
-      body:has(#series-fab[hidden]) #feedback-fab {
+      body:has(#series-fab[hidden]) #help-fab {
         top: calc(
           max(10px, env(safe-area-inset-top, 0px)) + 3 * (var(--fab-size) + var(--fab-gap))
         );
       }
+      body:has(#series-fab[hidden]) #feedback-fab {
+        top: calc(
+          max(10px, env(safe-area-inset-top, 0px)) + 4 * (var(--fab-size) + var(--fab-gap))
+        );
+      }
       body:has(#series-fab[hidden]) #donate-fab {
+        top: calc(
+          max(10px, env(safe-area-inset-top, 0px)) + 5 * (var(--fab-size) + var(--fab-gap))
+        );
+      }
+      body:has(#browse-fab[hidden]) #info-fab {
+        top: calc(
+          max(10px, env(safe-area-inset-top, 0px)) + 2 * (var(--fab-size) + var(--fab-gap))
+        );
+      }
+      body:has(#browse-fab[hidden]) #help-fab {
+        top: calc(
+          max(10px, env(safe-area-inset-top, 0px)) + 3 * (var(--fab-size) + var(--fab-gap))
+        );
+      }
+      body:has(#browse-fab[hidden]) #feedback-fab {
+        top: calc(
+          max(10px, env(safe-area-inset-top, 0px)) + 4 * (var(--fab-size) + var(--fab-gap))
+        );
+      }
+      body:has(#browse-fab[hidden]) #donate-fab {
+        top: calc(
+          max(10px, env(safe-area-inset-top, 0px)) + 5 * (var(--fab-size) + var(--fab-gap))
+        );
+      }
+      body:has(#series-fab[hidden]):has(#browse-fab[hidden]) #info-fab {
+        top: calc(max(10px, env(safe-area-inset-top, 0px)) + var(--fab-size) + var(--fab-gap));
+      }
+      body:has(#series-fab[hidden]):has(#browse-fab[hidden]) #help-fab {
+        top: calc(
+          max(10px, env(safe-area-inset-top, 0px)) + 2 * (var(--fab-size) + var(--fab-gap))
+        );
+      }
+      body:has(#series-fab[hidden]):has(#browse-fab[hidden]) #feedback-fab {
+        top: calc(
+          max(10px, env(safe-area-inset-top, 0px)) + 3 * (var(--fab-size) + var(--fab-gap))
+        );
+      }
+      body:has(#series-fab[hidden]):has(#browse-fab[hidden]) #donate-fab {
         top: calc(
           max(10px, env(safe-area-inset-top, 0px)) + 4 * (var(--fab-size) + var(--fab-gap))
         );
@@ -1228,6 +1367,11 @@
   <main id="game-main" hidden>
     <div>
       <div class="meta game-stats" id="game-stats" aria-live="polite"></div>
+      <div id="browse-bar" hidden>
+        <label for="browse-table" data-i18n="browseTable">Таблица</label>
+        <select id="browse-table" aria-label="Таблица картинок"></select>
+        <button type="button" id="browse-exit" data-i18n="browseExit">К игре</button>
+      </div>
       <div class="meta" id="level-meta"></div>
       <div role="group" class="rows" id="rows" data-i18n-aria="rowsAria" aria-label="Выбор строки или клавиши 1–8"></div>
     </div>
@@ -1369,6 +1513,23 @@
 
   <button
     type="button"
+    id="browse-fab"
+    data-i18n-aria="browseAria"
+    data-i18n-title="browseTitle"
+    aria-label="Примеры картинок"
+    title="Примеры: выбрать таблицу и ступень 1–8"
+    hidden
+  >
+    <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path
+        fill="currentColor"
+        d="M4 5h6v6H4V5zm10 0h6v6h-6V5zM4 15h6v6H4v-6zm10 2.5h2.5V15H19v2.5h2.5V20H19v2.5h-2.5V20H14v-2.5z"
+      />
+    </svg>
+  </button>
+
+  <button
+    type="button"
     id="info-fab"
     data-i18n-aria="summarize"
     data-i18n-title="summarize"
@@ -1418,8 +1579,8 @@
     </svg>
   </button>
 
-  <script src="game-data.js?v=1778730022"></script>
-  <script src="i18n.js?v=1778730022"></script>
+  <script src="game-data.js?v=1778730100"></script>
+  <script src="i18n.js?v=1778730100"></script>
   <script>
     (function () {
       "use strict";
@@ -1472,6 +1633,13 @@
       const seriesPickerCancel = document.getElementById("series-picker-cancel");
       const seriesPickerFull = document.getElementById("series-picker-full");
       const seriesFab = document.getElementById("series-fab");
+      const browseFab = document.getElementById("browse-fab");
+      const browseBar = document.getElementById("browse-bar");
+      const browseTable = document.getElementById("browse-table");
+      const browseExit = document.getElementById("browse-exit");
+      let browseMode = false;
+      let browseLevelIdx = 0;
+      let browseClass = 1;
       function wireHelpButtons() {
         document.querySelectorAll(".js-open-briefing").forEach(function (btn) {
           btn.addEventListener("click", function (e) {
@@ -1664,6 +1832,118 @@
           if (lv && Array.isArray(lv.images) && lv.images.length > 0) pn += 1;
         }
         seriesFab.hidden = wn === 0 && pn === 0;
+        if (browseFab) browseFab.hidden = pn === 0;
+      }
+
+      function firstPicsLevelIdx() {
+        for (let li = 0; li < levels.length; li++) {
+          const lv = levels[li];
+          if (lv && Array.isArray(lv.images) && lv.images.length > 0) return li;
+        }
+        return -1;
+      }
+
+      function findBrowseImage(lv, classNum) {
+        if (!lv || !Array.isArray(lv.images)) return null;
+        for (let i = 0; i < lv.images.length; i++) {
+          const im = lv.images[i];
+          if (im && im.class === classNum) return im;
+        }
+        const byName = String(classNum) + ".png";
+        for (let j = 0; j < lv.images.length; j++) {
+          const im2 = lv.images[j];
+          if (im2 && String(im2.file || "").toLowerCase() === byName) return im2;
+        }
+        return null;
+      }
+
+      function fillBrowseTableSelect() {
+        if (!browseTable) return;
+        browseTable.textContent = "";
+        for (let li = 0; li < levels.length; li++) {
+          const lv = levels[li];
+          if (!lv || !Array.isArray(lv.images) || lv.images.length === 0) continue;
+          const opt = document.createElement("option");
+          opt.value = String(li);
+          opt.textContent = getPicSeriesLabel(li);
+          browseTable.appendChild(opt);
+        }
+        if (browseLevelIdx < 0 || !levels[browseLevelIdx] || !levels[browseLevelIdx].images) {
+          browseLevelIdx = firstPicsLevelIdx();
+        }
+        if (browseLevelIdx >= 0) browseTable.value = String(browseLevelIdx);
+      }
+
+      function setBrowseRowHighlight(classNum) {
+        if (!rowsEl) return;
+        rowsEl.querySelectorAll(".row-slot").forEach(function (slot) {
+          const c = parseInt(slot.getAttribute("data-class"), 10);
+          if (c === classNum) slot.classList.add("is-browse-active");
+          else slot.classList.remove("is-browse-active");
+        });
+      }
+
+      function showBrowseExample(classNum) {
+        if (!browseMode) return;
+        if (classNum < 1 || classNum > 8) return;
+        const lv = levels[browseLevelIdx];
+        if (!lv) return;
+        browseClass = classNum;
+        setBrowseRowHighlight(classNum);
+        const tableName = getPicSeriesLabel(browseLevelIdx) || String(lv.id || "");
+        levelMeta.textContent = t("browseMeta", { table: tableName, n: classNum });
+        levelMeta.title = levelMeta.textContent;
+        hideStageTextCard();
+        currentImg.classList.remove("stage-txt", "shrink-out", "pic-pending");
+        currentWrap.hidden = false;
+        const im = findBrowseImage(lv, classNum);
+        if (!im) {
+          currentImg.removeAttribute("src");
+          currentImg.alt = "";
+          setFeedbackMsg(t("browseMissing", { n: classNum }), t("browseMissing", { n: classNum }));
+          feedback.className = "bad";
+          return;
+        }
+        const url = lv.folder + "/" + im.file;
+        currentImg.alt = im.file;
+        currentImg.title = tableName + " · " + classNum;
+        currentImg.src = url;
+        setFeedbackMsg(t("browseHint"), t("browseHint"));
+        feedback.className = "";
+      }
+
+      function enterBrowseMode() {
+        if (firstPicsLevelIdx() < 0) return;
+        closeSeriesPicker();
+        if (overlay) overlay.hidden = true;
+        if (picShrinkTimer !== null) {
+          window.clearTimeout(picShrinkTimer);
+          picShrinkTimer = null;
+        }
+        busy = false;
+        browseMode = true;
+        document.body.classList.add("browse-mode");
+        if (browseFab) browseFab.classList.add("is-active");
+        noDataEl.hidden = true;
+        mainEl.hidden = false;
+        if (browseBar) browseBar.hidden = false;
+        fillBrowseTableSelect();
+        buildRows();
+        showBrowseExample(browseClass >= 1 && browseClass <= 8 ? browseClass : 1);
+      }
+
+      function exitBrowseMode(restartGame) {
+        if (!browseMode) return;
+        browseMode = false;
+        document.body.classList.remove("browse-mode");
+        if (browseFab) browseFab.classList.remove("is-active");
+        if (browseBar) browseBar.hidden = true;
+        setBrowseRowHighlight(-1);
+        feedback.textContent = "";
+        feedback.className = "";
+        if (restartGame !== false) {
+          restartFromPlanSelection();
+        }
       }
 
       function loadWordsThenStart() {
@@ -2021,6 +2301,13 @@
       }
 
       function restartFromPlanSelection() {
+        if (browseMode) {
+          browseMode = false;
+          document.body.classList.remove("browse-mode");
+          if (browseFab) browseFab.classList.remove("is-active");
+          if (browseBar) browseBar.hidden = true;
+          setBrowseRowHighlight(-1);
+        }
         applyActivePlan();
         if (plan.length === 0) {
           noDataEl.hidden = false;
@@ -2280,6 +2567,11 @@
       function onPick(chosen) {
         if (busy) return;
         if (chosen < 1 || chosen > 8) return;
+
+        if (browseMode) {
+          showBrowseExample(chosen);
+          return;
+        }
 
         if (phase === "labels") {
           onPickTxtPhase(chosen);
@@ -2670,10 +2962,44 @@
           }
           return;
         }
+        if (browseMode) {
+          if (e.key === "Escape") {
+            e.preventDefault();
+            exitBrowseMode(true);
+            return;
+          }
+          const bn = parseInt(e.key, 10);
+          if (bn >= 1 && bn <= 8) onPick(bn);
+          return;
+        }
         if (overlay.hidden === false) return;
         const n = parseInt(e.key, 10);
         if (n >= 1 && n <= 8) onPick(n);
       });
+
+      if (browseFab) {
+        browseFab.addEventListener("click", function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          if (browseMode) exitBrowseMode(true);
+          else enterBrowseMode();
+        });
+      }
+      if (browseExit) {
+        browseExit.addEventListener("click", function (e) {
+          e.preventDefault();
+          exitBrowseMode(true);
+        });
+      }
+      if (browseTable) {
+        browseTable.addEventListener("change", function () {
+          if (!browseMode) return;
+          const idx = parseInt(browseTable.value, 10);
+          if (idx !== idx || !levels[idx] || !levels[idx].images) return;
+          browseLevelIdx = idx;
+          showBrowseExample(browseClass);
+        });
+      }
 
       if (seriesFab) {
         seriesFab.addEventListener("click", function (e) {
