@@ -1908,7 +1908,7 @@
         currentImg.alt = im.file;
         currentImg.title = tableName + " · " + classNum;
         currentImg.src = url;
-        setFeedbackMsg(t("browseHint"), t("browseHint"));
+        feedback.textContent = "";
         feedback.className = "";
       }
 
@@ -1990,14 +1990,18 @@
             rebuildPlanFull();
             applyActivePlan();
             updateSeriesFabVisibility();
-            if (plan.length === 0) {
+            if (plan.length === 0 && firstPicsLevelIdx() < 0) {
               noDataEl.hidden = false;
               return;
             }
             mainEl.hidden = false;
             resetSessionStats();
             stepIndex = 0;
-            beginPlayFromBriefing();
+            if (firstPicsLevelIdx() >= 0) {
+              enterBrowseMode();
+            } else {
+              beginPlayFromBriefing();
+            }
           });
       }
       let queue = [];
