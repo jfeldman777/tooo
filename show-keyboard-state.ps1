@@ -11,6 +11,12 @@ using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
 public static class KeyboardStateNative {
+    public const int WM_HOTKEY = 0x0312;
+    public const int WM_INPUTLANGCHANGEREQUEST = 0x0050;
+    public const int HOTKEY_ID_PAUSE = 1001;
+    public const uint KLF_ACTIVATE = 0x00000001;
+    public const uint VK_PAUSE = 0x13;
+
     [DllImport("user32.dll")]
     public static extern IntPtr GetForegroundWindow();
 
@@ -19,6 +25,43 @@ public static class KeyboardStateNative {
 
     [DllImport("user32.dll")]
     public static extern IntPtr GetKeyboardLayout(uint idThread);
+
+    [DllImport("user32.dll")]
+    public static extern bool RegisterHotKey(IntPtr hWnd, int id, uint fsModifiers, uint vk);
+
+    [DllImport("user32.dll")]
+    public static extern bool UnregisterHotKey(IntPtr hWnd, int id);
+
+    [DllImport("user32.dll")]
+    public static extern IntPtr LoadKeyboardLayout(string pwszKLID, uint flags);
+
+    [DllImport("user32.dll")]
+    public static extern bool PostMessage(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
+
+    public static string GetActiveLayoutId() {
+        IntPtr hwnd = GetForegroundWindow();
+        uint threadId = GetWindowThreadProcessId(hwnd, IntPtr.Zero);
+        long hkl = GetKeyboardLayout(threadId).ToInt64() & 0xffffffff;
+        return hkl.ToString("X8");
+    }
+
+    public static void ToggleRussianLayoutOnly() {
+        string current = GetActiveLayoutId();
+        string target = null;
+        if (current == "00020419") {
+            target = "00000419";
+        } else if (current == "00000419") {
+            target = "00020419";
+        }
+        if (target == null) {
+            return;
+        }
+        IntPtr targetHkl = LoadKeyboardLayout(target, KLF_ACTIVATE);
+        IntPtr hwnd = GetForegroundWindow();
+        if (hwnd != IntPtr.Zero && targetHkl != IntPtr.Zero) {
+            PostMessage(hwnd, WM_INPUTLANGCHANGEREQUEST, IntPtr.Zero, targetHkl);
+        }
+    }
 }
 
 public class NoActivateKeyboardForm : Form {
@@ -33,15 +76,30 @@ public class NoActivateKeyboardForm : Form {
             return cp;
         }
     }
+
+    protected override void OnHandleCreated(EventArgs e) {
+        base.OnHandleCreated(e);
+        KeyboardStateNative.RegisterHotKey(this.Handle, KeyboardStateNative.HOTKEY_ID_PAUSE, 0, KeyboardStateNative.VK_PAUSE);
+    }
+
+    protected override void OnHandleDestroyed(EventArgs e) {
+        KeyboardStateNative.UnregisterHotKey(this.Handle, KeyboardStateNative.HOTKEY_ID_PAUSE);
+        base.OnHandleDestroyed(e);
+    }
+
+    protected override void WndProc(ref Message m) {
+        if (m.Msg == KeyboardStateNative.WM_HOTKEY && m.WParam.ToInt32() == KeyboardStateNative.HOTKEY_ID_PAUSE) {
+            KeyboardStateNative.ToggleRussianLayoutOnly();
+            return;
+        }
+        base.WndProc(ref m);
+    }
 }
 "@
 
 function Get-ActiveKeyboardLayoutId {
     try {
-        $hwnd = [KeyboardStateNative]::GetForegroundWindow()
-        $threadId = [KeyboardStateNative]::GetWindowThreadProcessId($hwnd, [IntPtr]::Zero)
-        $hkl = [KeyboardStateNative]::GetKeyboardLayout($threadId).ToInt64() -band 0xffffffff
-        return ("{0:x8}" -f $hkl).ToUpperInvariant()
+        return [KeyboardStateNative]::GetActiveLayoutId()
     } catch {
         return "UNKNOWN"
     }
@@ -109,7 +167,7 @@ function Get-LayoutInfo([string]$layoutId) {
 }
 
 $form = [NoActivateKeyboardForm]::new()
-$form.Text = "Keyboard state"
+$form.Text = "Keyboard state - Pause toggles RU only"
 $form.TopMost = $true
 $form.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::FixedToolWindow
 $form.ShowInTaskbar = $true

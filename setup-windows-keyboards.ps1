@@ -96,6 +96,25 @@ function Disable-PerWindowInputMethod {
     }
 }
 
+function Disable-LegacyKeyboardToggleHotkeys {
+    $paths = @(
+        "HKCU:\Keyboard Layout\Toggle",
+        "Registry::HKEY_USERS\.DEFAULT\Keyboard Layout\Toggle"
+    )
+    foreach ($path in $paths) {
+        try {
+            if (-not (Test-Path -LiteralPath $path)) {
+                New-Item -Path $path -Force | Out-Null
+            }
+            New-ItemProperty -Path $path -Name "Hotkey" -Value "3" -PropertyType String -Force | Out-Null
+            New-ItemProperty -Path $path -Name "Language Hotkey" -Value "3" -PropertyType String -Force | Out-Null
+            New-ItemProperty -Path $path -Name "Layout Hotkey" -Value "3" -PropertyType String -Force | Out-Null
+        } catch {
+            Write-Warning "Не удалось отключить legacy hotkeys в ${path}: $($_.Exception.Message)"
+        }
+    }
+}
+
 function New-ExactLanguageList {
     $languageList = New-WinUserLanguageList "en-US"
     [void]$languageList.Add("ru-RU")
@@ -181,6 +200,16 @@ function Write-KeyboardReport {
         }
     }
     [void]$lines.Add("")
+    [void]$lines.Add("HKCU Keyboard Layout Toggle:")
+    $togglePath = "HKCU:\Keyboard Layout\Toggle"
+    if (Test-Path -LiteralPath $togglePath) {
+        $toggleProps = Get-ItemProperty -Path $togglePath
+        foreach ($name in @("Hotkey", "Language Hotkey", "Layout Hotkey")) {
+            $value = $toggleProps.$name
+            [void]$lines.Add(("  " + $name + " = " + $value))
+        }
+    }
+    [void]$lines.Add("")
     $activeLayout = Get-ActiveKeyboardLayoutId
     [void]$lines.Add(("Active foreground layout: " + $activeLayout + " (" + (Get-KeyboardLayoutName $activeLayout) + ")"))
     [System.IO.File]::WriteAllLines($report, $lines, [System.Text.UTF8Encoding]::new($false))
@@ -212,6 +241,7 @@ try {
     Write-Warning "Не удалось вызвать Set-WinLanguageBarOption: $($_.Exception.Message)"
 }
 Disable-PerWindowInputMethod
+Disable-LegacyKeyboardToggleHotkeys
 
 try {
     Add-Type @"
@@ -238,6 +268,6 @@ Write-Host "RU-клавиатуры: Russian - Mnemonic и Russian."
 Write-Host "Hebrew: один пункт, только Hebrew (Standard)."
 Write-Host "По умолчанию: RU Russian - Mnemonic."
 Write-Host ""
-Write-Host "Переключение языка: Win+Space или Alt+Shift."
-Write-Host "Когда выбран RU, переключение Russian - Mnemonic <-> Russian: Ctrl+Shift."
+Write-Host "Переключение языка: Win+Space."
+Write-Host "RU-тумблер Russian - Mnemonic <-> Russian: Fn+Pause/Pause в show-keyboard-state.bat."
 Write-Host "Если список не обновился сразу, выйдите из Windows и войдите снова."

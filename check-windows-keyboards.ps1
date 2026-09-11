@@ -63,6 +63,16 @@ if (Test-Path -LiteralPath $preloadPath) {
     }
 }
 [void]$lines.Add("")
+[void]$lines.Add("HKCU Keyboard Layout Toggle:")
+$togglePath = "HKCU:\Keyboard Layout\Toggle"
+if (Test-Path -LiteralPath $togglePath) {
+    $toggleProps = Get-ItemProperty -Path $togglePath
+    foreach ($name in @("Hotkey", "Language Hotkey", "Layout Hotkey")) {
+        $value = $toggleProps.$name
+        [void]$lines.Add(("  " + $name + " = " + $value))
+    }
+}
+[void]$lines.Add("")
 $activeLayout = Get-ActiveKeyboardLayoutId
 [void]$lines.Add(("Active foreground layout: " + $activeLayout + " (" + (Get-KeyboardLayoutName $activeLayout) + ")"))
 
