@@ -2,6 +2,12 @@
 # It configures one global input layout state for all app windows.
 $ErrorActionPreference = "Stop"
 
+$EnUsTip = "0409:00000409"
+$RuStandardTip = "0419:00000419"
+$RuMnemonicTip = "0419:00020419"
+$HebrewStandardTip = "040D:0002040D"
+$LegacyHebrewLayoutIds = @("0000040D", "0003040D")
+
 function Set-InputMethods($language, [string[]]$tips) {
     $language.InputMethodTips.Clear()
     foreach ($tip in $tips) {
@@ -36,23 +42,53 @@ function Set-KeyboardPreloadRegistry([string[]]$layoutIds) {
     }
 }
 
+function Remove-LegacyHebrewRegistryLayouts {
+    $paths = @(
+        "HKCU:\Keyboard Layout\Preload",
+        "HKCU:\Keyboard Layout\Substitutes"
+    )
+    foreach ($path in $paths) {
+        if (-not (Test-Path -LiteralPath $path)) {
+            continue
+        }
+        $props = Get-ItemProperty -Path $path
+        foreach ($prop in $props.PSObject.Properties) {
+            $value = [string]$prop.Value
+            if ($LegacyHebrewLayoutIds -contains $prop.Name -or $LegacyHebrewLayoutIds -contains $value) {
+                Remove-ItemProperty -Path $path -Name $prop.Name -ErrorAction SilentlyContinue
+            }
+        }
+    }
+}
+
+function New-ExactLanguageList {
+    $languageList = New-WinUserLanguageList "en-US"
+    [void]$languageList.Add("ru-RU")
+    [void]$languageList.Add("he-IL")
+
+    Set-InputMethods (Get-Language $languageList "en-US") @($EnUsTip)
+    Set-InputMethods (Get-Language $languageList "ru-RU") @($RuStandardTip, $RuMnemonicTip)
+    Set-InputMethods (Get-Language $languageList "he-IL") @($HebrewStandardTip)
+
+    return $languageList
+}
+
 Write-Host "Настройка клавиатур Windows для текущего пользователя..."
 
-$list = New-WinUserLanguageList "en-US"
-[void]$list.Add("ru-RU")
-[void]$list.Add("he-IL")
+$list = New-ExactLanguageList
+Set-WinUserLanguageList $list -Force
+Start-Sleep -Milliseconds 500
 
-Set-InputMethods (Get-Language $list "en-US") @("0409:00000409")             # English - US
-Set-InputMethods (Get-Language $list "ru-RU") @("0419:00000419", "0419:00020419") # Russian + Russian - Mnemonic
-Set-InputMethods (Get-Language $list "he-IL") @("040D:0002040D")             # Hebrew (Standard)
-
+# Re-apply after Windows materializes language defaults; this removes auto-added Hebrew legacy layouts.
+$list = New-ExactLanguageList
 Set-WinUserLanguageList $list -Force
 
 # Keep the legacy Windows layout preload list exact too: one EN, two RU, one Hebrew Standard.
 Set-KeyboardPreloadRegistry @("00000409", "00000419", "00020419", "0002040D")
+Remove-LegacyHebrewRegistryLayouts
 
 # RU standard is the default input after setup; Ctrl+Shift switches RU standard <-> RU mnemonic.
-Set-WinDefaultInputMethodOverride -InputTip "0419:00000419"
+Set-WinDefaultInputMethodOverride -InputTip $RuStandardTip
 
 # Make input layout global instead of separate per app window.
 try {
