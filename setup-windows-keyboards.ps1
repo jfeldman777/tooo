@@ -118,6 +118,43 @@ function Restart-InputSwitcher {
     }
 }
 
+function Get-ActiveKeyboardLayoutId {
+    try {
+        Add-Type @"
+using System;
+using System.Runtime.InteropServices;
+public static class KeyboardLayoutState {
+    [DllImport("user32.dll")]
+    public static extern IntPtr GetForegroundWindow();
+
+    [DllImport("user32.dll")]
+    public static extern uint GetWindowThreadProcessId(IntPtr hWnd, IntPtr processId);
+
+    [DllImport("user32.dll")]
+    public static extern IntPtr GetKeyboardLayout(uint idThread);
+}
+"@
+        $hwnd = [KeyboardLayoutState]::GetForegroundWindow()
+        $threadId = [KeyboardLayoutState]::GetWindowThreadProcessId($hwnd, [IntPtr]::Zero)
+        $hkl = [KeyboardLayoutState]::GetKeyboardLayout($threadId).ToInt64() -band 0xffffffff
+        return ("{0:x8}" -f $hkl).ToUpperInvariant()
+    } catch {
+        return "unknown"
+    }
+}
+
+function Get-KeyboardLayoutName([string]$layoutId) {
+    switch ($layoutId.ToUpperInvariant()) {
+        "00000409" { return "EN US" }
+        "00000419" { return "RU Russian" }
+        "00020419" { return "RU Russian - Mnemonic" }
+        "0002040D" { return "HE Hebrew (Standard)" }
+        "0000040D" { return "HE Hebrew legacy (should be removed)" }
+        "0003040D" { return "HE Hebrew Standard 2018 (should be removed)" }
+        default { return "unknown" }
+    }
+}
+
 function Write-KeyboardReport {
     $report = Join-Path $PSScriptRoot "keyboard-setup-report.txt"
     $lines = New-Object System.Collections.Generic.List[string]
@@ -143,6 +180,9 @@ function Write-KeyboardReport {
             [void]$lines.Add(("  " + $prop.Name + " = " + $prop.Value))
         }
     }
+    [void]$lines.Add("")
+    $activeLayout = Get-ActiveKeyboardLayoutId
+    [void]$lines.Add(("Active foreground layout: " + $activeLayout + " (" + (Get-KeyboardLayoutName $activeLayout) + ")"))
     [System.IO.File]::WriteAllLines($report, $lines, [System.Text.UTF8Encoding]::new($false))
     Write-Host "Отчёт: $report"
 }
