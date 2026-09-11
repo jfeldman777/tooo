@@ -5,6 +5,7 @@ $ErrorActionPreference = "Stop"
 $EnUsTip = "0409:00000409"
 $RuStandardTip = "0419:00000419"
 $RuMnemonicTip = "0419:00020419"
+$DefaultInputTip = $RuMnemonicTip
 $HebrewStandardTip = "040D:0002040D"
 $LegacyHebrewLayoutIds = @("0000040D", "0003040D")
 
@@ -81,6 +82,20 @@ function Remove-LegacyHebrewRegistryLayouts {
     }
 }
 
+function Disable-PerWindowInputMethod {
+    $desktopPath = "HKCU:\Control Panel\Desktop"
+    try {
+        $prefMask = (Get-ItemProperty -Path $desktopPath -Name "UserPreferencesMask" -ErrorAction Stop).UserPreferencesMask
+        if ($prefMask -and $prefMask.Length -gt 4) {
+            # Bit 0x80 in byte 4 enables "different input method for each app window".
+            $prefMask[4] = $prefMask[4] -band 0x7F
+            New-ItemProperty -Path $desktopPath -Name "UserPreferencesMask" -Value $prefMask -PropertyType Binary -Force | Out-Null
+        }
+    } catch {
+        Write-Warning "Не удалось выключить раскладки по окнам через UserPreferencesMask: $($_.Exception.Message)"
+    }
+}
+
 function New-ExactLanguageList {
     $languageList = New-WinUserLanguageList "en-US"
     [void]$languageList.Add("ru-RU")
@@ -147,8 +162,8 @@ Set-KeyboardPreloadRegistry @("00000409", "00000419", "00020419", "0002040D")
 Set-DefaultUserPreloadRegistry @("00000409", "00000419", "00020419", "0002040D")
 Remove-LegacyHebrewRegistryLayouts
 
-# RU standard is the default input after setup; Ctrl+Shift switches RU standard <-> RU mnemonic.
-Set-WinDefaultInputMethodOverride -InputTip $RuStandardTip
+# RU mnemonic ("клавиа") is the default input after setup; Ctrl+Shift switches RU mnemonic <-> RU standard.
+Set-WinDefaultInputMethodOverride -InputTip $DefaultInputTip
 
 # Make input layout global instead of separate per app window.
 try {
@@ -156,6 +171,7 @@ try {
 } catch {
     Write-Warning "Не удалось вызвать Set-WinLanguageBarOption: $($_.Exception.Message)"
 }
+Disable-PerWindowInputMethod
 
 try {
     Add-Type @"
@@ -180,7 +196,8 @@ Write-Host "Готово."
 Write-Host "Языки: EN US, RU, HE."
 Write-Host "RU-клавиатуры: Russian и Russian - Mnemonic."
 Write-Host "Hebrew: один пункт, только Hebrew (Standard)."
+Write-Host "По умолчанию: RU Russian - Mnemonic."
 Write-Host ""
 Write-Host "Переключение языка: Win+Space или Alt+Shift."
-Write-Host "Когда выбран RU, переключение Russian <-> Russian - Mnemonic: Ctrl+Shift."
+Write-Host "Когда выбран RU, переключение Russian - Mnemonic <-> Russian: Ctrl+Shift."
 Write-Host "Если список не обновился сразу, выйдите из Windows и войдите снова."
