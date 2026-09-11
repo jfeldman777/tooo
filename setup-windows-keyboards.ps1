@@ -102,7 +102,7 @@ function New-ExactLanguageList {
     [void]$languageList.Add("he-IL")
 
     Set-InputMethods (Get-Language $languageList "en-US") @($EnUsTip)
-    Set-InputMethods (Get-Language $languageList "ru-RU") @($RuStandardTip, $RuMnemonicTip)
+    Set-InputMethods (Get-Language $languageList "ru-RU") @($RuMnemonicTip, $RuStandardTip)
     Set-InputMethods (Get-Language $languageList "he-IL") @($HebrewStandardTip)
 
     return $languageList
@@ -157,9 +157,9 @@ Start-Sleep -Milliseconds 500
 $list = New-ExactLanguageList
 Set-WinUserLanguageList $list -Force
 
-# Keep the legacy Windows layout preload list exact too: one EN, two RU, one Hebrew Standard.
-Set-KeyboardPreloadRegistry @("00000409", "00000419", "00020419", "0002040D")
-Set-DefaultUserPreloadRegistry @("00000409", "00000419", "00020419", "0002040D")
+# Keep the legacy Windows layout preload list exact too: one EN, RU mnemonic, RU standard, one Hebrew Standard.
+Set-KeyboardPreloadRegistry @("00000409", "00020419", "00000419", "0002040D")
+Set-DefaultUserPreloadRegistry @("00000409", "00020419", "00000419", "0002040D")
 Remove-LegacyHebrewRegistryLayouts
 
 # RU mnemonic ("клавиа") is the default input after setup; Ctrl+Shift switches RU mnemonic <-> RU standard.
@@ -194,7 +194,7 @@ Write-KeyboardReport
 Write-Host ""
 Write-Host "Готово."
 Write-Host "Языки: EN US, RU, HE."
-Write-Host "RU-клавиатуры: Russian и Russian - Mnemonic."
+Write-Host "RU-клавиатуры: Russian - Mnemonic и Russian."
 Write-Host "Hebrew: один пункт, только Hebrew (Standard)."
 Write-Host "По умолчанию: RU Russian - Mnemonic."
 Write-Host ""
