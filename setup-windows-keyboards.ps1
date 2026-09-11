@@ -18,6 +18,24 @@ function Get-Language($list, [string]$tag) {
     return $null
 }
 
+function Set-KeyboardPreloadRegistry([string[]]$layoutIds) {
+    $preloadPath = "HKCU:\Keyboard Layout\Preload"
+    if (-not (Test-Path -LiteralPath $preloadPath)) {
+        New-Item -Path $preloadPath -Force | Out-Null
+    }
+
+    $props = Get-ItemProperty -Path $preloadPath
+    foreach ($prop in $props.PSObject.Properties) {
+        if ($prop.Name -match '^\d+$') {
+            Remove-ItemProperty -Path $preloadPath -Name $prop.Name -ErrorAction SilentlyContinue
+        }
+    }
+
+    for ($i = 0; $i -lt $layoutIds.Count; $i++) {
+        New-ItemProperty -Path $preloadPath -Name ([string]($i + 1)) -Value $layoutIds[$i] -PropertyType String -Force | Out-Null
+    }
+}
+
 Write-Host "Настройка клавиатур Windows для текущего пользователя..."
 
 $list = New-WinUserLanguageList "en-US"
@@ -29,6 +47,9 @@ Set-InputMethods (Get-Language $list "ru-RU") @("0419:00000419", "0419:00020419"
 Set-InputMethods (Get-Language $list "he-IL") @("040D:0002040D")             # Hebrew (Standard)
 
 Set-WinUserLanguageList $list -Force
+
+# Keep the legacy Windows layout preload list exact too: one EN, two RU, one Hebrew Standard.
+Set-KeyboardPreloadRegistry @("00000409", "00000419", "00020419", "0002040D")
 
 # RU standard is the default input after setup; Ctrl+Shift switches RU standard <-> RU mnemonic.
 Set-WinDefaultInputMethodOverride -InputTip "0419:00000419"
@@ -58,7 +79,7 @@ Write-Host ""
 Write-Host "Готово."
 Write-Host "Языки: EN US, RU, HE."
 Write-Host "RU-клавиатуры: Russian и Russian - Mnemonic."
-Write-Host "Hebrew: только Hebrew (Standard)."
+Write-Host "Hebrew: один пункт, только Hebrew (Standard)."
 Write-Host ""
 Write-Host "Переключение языка: Win+Space или Alt+Shift."
 Write-Host "Когда выбран RU, переключение Russian <-> Russian - Mnemonic: Ctrl+Shift."
